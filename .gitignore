@@ -12,3 +12,7 @@ wp-config.php
 
 # Distribution
 *.zip
+
+# Claude Code local files
+.claude/memory/
+.claude/settings.local.json
