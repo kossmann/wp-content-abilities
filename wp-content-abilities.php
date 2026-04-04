@@ -73,14 +73,17 @@ function wp_content_abilities_register() {
                 ),
                 'search' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Search posts by keyword.',
                 ),
                 'category' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Filter by category slug.',
                 ),
                 'tag' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Filter by tag slug.',
                 ),
                 'author' => array(
@@ -207,14 +210,17 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'title' => array(
                     'type'        => 'string',
+                    'maxLength'   => 500,
                     'description' => 'The post title.',
                 ),
                 'content' => array(
                     'type'        => 'string',
+                    'maxLength'   => 2000000,
                     'description' => 'The post content (HTML supported).',
                 ),
                 'excerpt' => array(
                     'type'        => 'string',
+                    'maxLength'   => 1000,
                     'description' => 'The post excerpt/summary.',
                 ),
                 'status' => array(
@@ -225,20 +231,24 @@ function wp_content_abilities_register() {
                 ),
                 'slug' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'The post slug (URL-friendly name).',
                 ),
                 'categories' => array(
                     'type'        => 'array',
-                    'items'       => array( 'type' => 'string' ),
+                    'items'       => array( 'type' => 'string', 'maxLength' => 200 ),
+                    'maxItems'    => 50,
                     'description' => 'Category slugs to assign.',
                 ),
                 'tags' => array(
                     'type'        => 'array',
-                    'items'       => array( 'type' => 'string' ),
+                    'items'       => array( 'type' => 'string', 'maxLength' => 200 ),
+                    'maxItems'    => 50,
                     'description' => 'Tag names to assign (will be created if they do not exist).',
                 ),
                 'date' => array(
                     'type'        => 'string',
+                    'maxLength'   => 30,
                     'description' => 'Publish date (ISO 8601 format). For scheduled posts, use status=future.',
                 ),
                 'featured_image_id' => array(
@@ -259,17 +269,18 @@ function wp_content_abilities_register() {
                 'comment_status' => array(
                     'type'        => 'string',
                     'enum'        => array( 'open', 'closed' ),
-                    'default'     => 'open',
+                    'default'     => 'closed',
                     'description' => 'Whether comments are allowed.',
                 ),
                 'ping_status' => array(
                     'type'        => 'string',
                     'enum'        => array( 'open', 'closed' ),
-                    'default'     => 'open',
+                    'default'     => 'closed',
                     'description' => 'Whether pingbacks/trackbacks are allowed.',
                 ),
                 'author' => array(
                     'type'        => 'string',
+                    'maxLength'   => 60,
                     'description' => 'Author username. Defaults to authenticated user.',
                 ),
             ),
@@ -319,14 +330,17 @@ function wp_content_abilities_register() {
                 ),
                 'title' => array(
                     'type'        => 'string',
+                    'maxLength'   => 500,
                     'description' => 'The new post title.',
                 ),
                 'content' => array(
                     'type'        => 'string',
+                    'maxLength'   => 2000000,
                     'description' => 'The new post content.',
                 ),
                 'excerpt' => array(
                     'type'        => 'string',
+                    'maxLength'   => 1000,
                     'description' => 'The new post excerpt.',
                 ),
                 'status' => array(
@@ -336,20 +350,24 @@ function wp_content_abilities_register() {
                 ),
                 'slug' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'The new post slug.',
                 ),
                 'categories' => array(
                     'type'        => 'array',
-                    'items'       => array( 'type' => 'string' ),
+                    'items'       => array( 'type' => 'string', 'maxLength' => 200 ),
+                    'maxItems'    => 50,
                     'description' => 'Category slugs (replaces existing).',
                 ),
                 'tags' => array(
                     'type'        => 'array',
-                    'items'       => array( 'type' => 'string' ),
+                    'items'       => array( 'type' => 'string', 'maxLength' => 200 ),
+                    'maxItems'    => 50,
                     'description' => 'Tag slugs (replaces existing).',
                 ),
                 'date' => array(
                     'type'        => 'string',
+                    'maxLength'   => 30,
                     'description' => 'New publish date (ISO 8601 format).',
                 ),
                 'featured_image_id' => array(
@@ -467,6 +485,7 @@ function wp_content_abilities_register() {
                 ),
                 'search' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Search pages by keyword.',
                 ),
                 'parent' => array(
@@ -590,14 +609,17 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'title' => array(
                     'type'        => 'string',
+                    'maxLength'   => 500,
                     'description' => 'The page title.',
                 ),
                 'content' => array(
                     'type'        => 'string',
+                    'maxLength'   => 2000000,
                     'description' => 'The page content.',
                 ),
                 'excerpt' => array(
                     'type'        => 'string',
+                    'maxLength'   => 1000,
                     'description' => 'The page excerpt.',
                 ),
                 'status' => array(
@@ -608,6 +630,7 @@ function wp_content_abilities_register() {
                 ),
                 'slug' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'The page slug.',
                 ),
                 'parent' => array(
@@ -620,6 +643,7 @@ function wp_content_abilities_register() {
                 ),
                 'template' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Page template filename.',
                 ),
                 'featured_image_id' => array(
@@ -672,14 +696,17 @@ function wp_content_abilities_register() {
                 ),
                 'title' => array(
                     'type'        => 'string',
+                    'maxLength'   => 500,
                     'description' => 'The new page title.',
                 ),
                 'content' => array(
                     'type'        => 'string',
+                    'maxLength'   => 2000000,
                     'description' => 'The new page content.',
                 ),
                 'excerpt' => array(
                     'type'        => 'string',
+                    'maxLength'   => 1000,
                     'description' => 'The new page excerpt.',
                 ),
                 'status' => array(
@@ -689,6 +716,7 @@ function wp_content_abilities_register() {
                 ),
                 'slug' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'The new page slug.',
                 ),
                 'parent' => array(
@@ -701,6 +729,7 @@ function wp_content_abilities_register() {
                 ),
                 'template' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'New page template.',
                 ),
                 'featured_image_id' => array(
@@ -856,6 +885,7 @@ function wp_content_abilities_register() {
                 ),
                 'search' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Search tags by name.',
                 ),
             ),
@@ -911,30 +941,37 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'filename' => array(
                     'type'        => 'string',
+                    'maxLength'   => 255,
                     'description' => 'Filename with extension (e.g., "my-image.jpg").',
                 ),
                 'base64' => array(
                     'type'        => 'string',
+                    'maxLength'   => 20000000,
                     'description' => 'Base64-encoded image data (without data URI prefix).',
                 ),
                 'url' => array(
                     'type'        => 'string',
+                    'maxLength'   => 2083,
                     'description' => 'URL to download image from. Use either base64 or url, not both.',
                 ),
                 'title' => array(
                     'type'        => 'string',
+                    'maxLength'   => 500,
                     'description' => 'Title for the media item.',
                 ),
                 'alt_text' => array(
                     'type'        => 'string',
+                    'maxLength'   => 500,
                     'description' => 'Alt text for accessibility.',
                 ),
                 'caption' => array(
                     'type'        => 'string',
+                    'maxLength'   => 1000,
                     'description' => 'Caption for the media item.',
                 ),
                 'description' => array(
                     'type'        => 'string',
+                    'maxLength'   => 5000,
                     'description' => 'Description of the media item.',
                 ),
             ),
@@ -990,10 +1027,12 @@ function wp_content_abilities_register() {
                 ),
                 'mime_type' => array(
                     'type'        => 'string',
+                    'maxLength'   => 100,
                     'description' => 'Filter by MIME type (e.g., "image", "image/jpeg", "application/pdf").',
                 ),
                 'search' => array(
                     'type'        => 'string',
+                    'maxLength'   => 200,
                     'description' => 'Search by filename or title.',
                 ),
             ),
@@ -1041,13 +1080,41 @@ function wp_content_abilities_register() {
 // =============================================================================
 
 /**
+ * Resolve a requested post status to what the current user is allowed to see.
+ *
+ * Subscribers (capability: read) may only list published content.
+ * Authors/editors (capability: edit_posts) may also see their own drafts,
+ * pending, private, and future posts.
+ * Editors/admins (capability: edit_others_posts) may use 'any'.
+ *
+ * @param string $requested The status requested by the caller.
+ * @param string $post_type 'post' or 'page' — used to pick the right caps.
+ * @return string Sanitised status safe to pass to WP_Query.
+ */
+function wp_content_abilities_resolve_status( $requested, $post_type = 'post' ) {
+    $edit_cap        = ( 'page' === $post_type ) ? 'edit_pages'        : 'edit_posts';
+    $edit_others_cap = ( 'page' === $post_type ) ? 'edit_others_pages' : 'edit_others_posts';
+
+    // Only editors/admins can request 'any' or see content from all authors.
+    if ( 'any' === $requested ) {
+        return current_user_can( $edit_others_cap ) ? 'any' : 'publish';
+    }
+
+    // Non-published statuses require at least author-level capability.
+    $non_published = array( 'draft', 'pending', 'private', 'future' );
+    if ( in_array( $requested, $non_published, true ) ) {
+        return current_user_can( $edit_cap ) ? $requested : 'publish';
+    }
+
+    return 'publish';
+}
+
+/**
  * List Posts callback
  */
 function wp_content_abilities_list_posts( $input ) {
-    $status = $input['status'] ?? 'any';
-    if ( 'any' === $status && ! current_user_can( 'edit_others_posts' ) ) {
-        $status = 'publish';
-    }
+    $requested = $input['status'] ?? 'any';
+    $status     = wp_content_abilities_resolve_status( $requested, 'post' );
 
     $args = array(
         'post_type'      => 'post',
@@ -1145,8 +1212,8 @@ function wp_content_abilities_create_post( $input ) {
         'post_excerpt'   => $input['excerpt'] ?? '',
         'post_status'    => $input['status'] ?? 'draft',
         'post_name'      => $input['slug'] ?? '',
-        'comment_status' => $input['comment_status'] ?? 'open',
-        'ping_status'    => $input['ping_status'] ?? 'open',
+        'comment_status' => $input['comment_status'] ?? 'closed',
+        'ping_status'    => $input['ping_status'] ?? 'closed',
     );
 
     if ( ! empty( $input['date'] ) ) {
@@ -1184,9 +1251,16 @@ function wp_content_abilities_create_post( $input ) {
         wp_set_post_tags( $post_id, $input['tags'] );
     }
 
-    // Handle featured image
+    // Handle featured image — verify the attachment exists, is an image,
+    // and belongs to the current user (or the user can edit others' posts).
     if ( ! empty( $input['featured_image_id'] ) ) {
-        set_post_thumbnail( $post_id, $input['featured_image_id'] );
+        $attachment = get_post( $input['featured_image_id'] );
+        if ( $attachment && 'attachment' === $attachment->post_type
+            && wp_attachment_is_image( $attachment->ID )
+            && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_posts' ) )
+        ) {
+            set_post_thumbnail( $post_id, $attachment->ID );
+        }
     }
 
     // Handle post format
@@ -1270,12 +1344,19 @@ function wp_content_abilities_update_post( $input ) {
         wp_set_post_tags( $input['id'], $input['tags'] );
     }
 
-    // Handle featured image
+    // Handle featured image — verify the attachment exists, is an image,
+    // and belongs to the current user (or the user can edit others' posts).
     if ( isset( $input['featured_image_id'] ) ) {
-        if ( $input['featured_image_id'] === 0 ) {
+        if ( 0 === $input['featured_image_id'] ) {
             delete_post_thumbnail( $input['id'] );
         } else {
-            set_post_thumbnail( $input['id'], $input['featured_image_id'] );
+            $attachment = get_post( $input['featured_image_id'] );
+            if ( $attachment && 'attachment' === $attachment->post_type
+                && wp_attachment_is_image( $attachment->ID )
+                && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_posts' ) )
+            ) {
+                set_post_thumbnail( $input['id'], $attachment->ID );
+            }
         }
     }
 
@@ -1326,10 +1407,8 @@ function wp_content_abilities_delete_post( $input ) {
  * List Pages callback
  */
 function wp_content_abilities_list_pages( $input ) {
-    $status = $input['status'] ?? 'any';
-    if ( 'any' === $status && ! current_user_can( 'edit_others_posts' ) ) {
-        $status = 'publish';
-    }
+    $requested = $input['status'] ?? 'any';
+    $status     = wp_content_abilities_resolve_status( $requested, 'page' );
 
     $args = array(
         'post_type'      => 'page',
@@ -1425,14 +1504,25 @@ function wp_content_abilities_create_page( $input ) {
         return $post_id;
     }
 
-    // Handle template
+    // Handle template — validate against registered templates to prevent LFI.
     if ( ! empty( $input['template'] ) ) {
-        update_post_meta( $post_id, '_wp_page_template', $input['template'] );
+        $valid_templates = array_keys( wp_get_theme()->get_page_templates() );
+        $valid_templates[] = 'default';
+        if ( in_array( $input['template'], $valid_templates, true ) ) {
+            update_post_meta( $post_id, '_wp_page_template', $input['template'] );
+        }
     }
 
-    // Handle featured image
+    // Handle featured image — verify the attachment exists, is an image,
+    // and belongs to the current user (or the user can edit others' posts).
     if ( ! empty( $input['featured_image_id'] ) ) {
-        set_post_thumbnail( $post_id, $input['featured_image_id'] );
+        $attachment = get_post( $input['featured_image_id'] );
+        if ( $attachment && 'attachment' === $attachment->post_type
+            && wp_attachment_is_image( $attachment->ID )
+            && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_posts' ) )
+        ) {
+            set_post_thumbnail( $post_id, $attachment->ID );
+        }
     }
 
     $post = get_post( $post_id );
@@ -1491,17 +1581,28 @@ function wp_content_abilities_update_page( $input ) {
         return $result;
     }
 
-    // Handle template
+    // Handle template — validate against registered templates to prevent LFI.
     if ( isset( $input['template'] ) ) {
-        update_post_meta( $input['id'], '_wp_page_template', $input['template'] );
+        $valid_templates = array_keys( wp_get_theme()->get_page_templates() );
+        $valid_templates[] = 'default';
+        if ( in_array( $input['template'], $valid_templates, true ) ) {
+            update_post_meta( $input['id'], '_wp_page_template', $input['template'] );
+        }
     }
 
-    // Handle featured image
+    // Handle featured image — verify the attachment exists, is an image,
+    // and belongs to the current user (or the user can edit others' posts).
     if ( isset( $input['featured_image_id'] ) ) {
-        if ( $input['featured_image_id'] === 0 ) {
+        if ( 0 === $input['featured_image_id'] ) {
             delete_post_thumbnail( $input['id'] );
         } else {
-            set_post_thumbnail( $input['id'], $input['featured_image_id'] );
+            $attachment = get_post( $input['featured_image_id'] );
+            if ( $attachment && 'attachment' === $attachment->post_type
+                && wp_attachment_is_image( $attachment->ID )
+                && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_posts' ) )
+            ) {
+                set_post_thumbnail( $input['id'], $attachment->ID );
+            }
         }
     }
 
@@ -1628,18 +1729,16 @@ function wp_content_abilities_upload_media( $input ) {
     } elseif ( ! empty( $input['url'] ) ) {
         $url = $input['url'];
 
-        // Validate URL and block private/internal addresses (SSRF prevention).
+        // wp_http_validate_url() rejects non-http(s) schemes and malformed URLs.
         if ( ! wp_http_validate_url( $url ) ) {
             return new WP_Error( 'invalid_url', 'Invalid URL provided.', array( 'status' => 400 ) );
         }
-        $parsed = parse_url( $url );
-        $host   = $parsed['host'] ?? '';
-        $ip     = gethostbyname( $host );
-        if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
-            return new WP_Error( 'ssrf_blocked', 'URL resolves to a private or reserved address.', array( 'status' => 400 ) );
-        }
 
-        $response = wp_remote_get( $url, array( 'timeout' => 30 ) );
+        // wp_safe_remote_get() uses WordPress's own safe HTTP transport which
+        // blocks requests to private/loopback/reserved IP ranges at the socket
+        // level — after DNS resolution — eliminating SSRF and DNS-rebinding
+        // risks that a pre-resolution gethostbyname() check cannot prevent.
+        $response = wp_safe_remote_get( $url, array( 'timeout' => 15 ) );
         if ( is_wp_error( $response ) ) {
             return new WP_Error( 'download_failed', 'Failed to download image: ' . $response->get_error_message(), array( 'status' => 400 ) );
         }
