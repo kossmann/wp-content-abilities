@@ -98,7 +98,7 @@ function wp_content_abilities_register() {
                 ),
                 'order' => array(
                     'type'        => 'string',
-                    'enum'        => array( 'ASC', 'DESC' ),
+                    'enum'        => array( 'ASC', 'DESC', 'asc', 'desc' ),
                     'default'     => 'DESC',
                     'description' => 'Sort order.',
                 ),
@@ -500,7 +500,7 @@ function wp_content_abilities_register() {
                 ),
                 'order' => array(
                     'type'        => 'string',
-                    'enum'        => array( 'ASC', 'DESC' ),
+                    'enum'        => array( 'ASC', 'DESC', 'asc', 'desc' ),
                     'default'     => 'ASC',
                     'description' => 'Sort order.',
                 ),
@@ -1122,7 +1122,7 @@ function wp_content_abilities_list_posts( $input ) {
         'posts_per_page' => $input['per_page'] ?? 10,
         'paged'          => $input['page'] ?? 1,
         'orderby'        => $input['orderby'] ?? 'date',
-        'order'          => $input['order'] ?? 'DESC',
+        'order'          => strtoupper( $input['order'] ?? 'DESC' ),
     );
 
     if ( ! empty( $input['search'] ) ) {
@@ -1416,7 +1416,7 @@ function wp_content_abilities_list_pages( $input ) {
         'posts_per_page' => $input['per_page'] ?? 10,
         'paged'          => $input['page'] ?? 1,
         'orderby'        => $input['orderby'] ?? 'menu_order',
-        'order'          => $input['order'] ?? 'ASC',
+        'order'          => strtoupper( $input['order'] ?? 'ASC' ),
     );
 
     if ( ! empty( $input['search'] ) ) {
