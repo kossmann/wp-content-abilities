@@ -1044,9 +1044,14 @@ function wp_content_abilities_register() {
  * List Posts callback
  */
 function wp_content_abilities_list_posts( $input ) {
+    $status = $input['status'] ?? 'any';
+    if ( 'any' === $status && ! current_user_can( 'edit_others_posts' ) ) {
+        $status = 'publish';
+    }
+
     $args = array(
         'post_type'      => 'post',
-        'post_status'    => $input['status'] ?? 'any',
+        'post_status'    => $status,
         'posts_per_page' => $input['per_page'] ?? 10,
         'paged'          => $input['page'] ?? 1,
         'orderby'        => $input['orderby'] ?? 'date',
@@ -1104,6 +1109,10 @@ function wp_content_abilities_get_post( $input ) {
         return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
     }
 
+    if ( ! current_user_can( 'read_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to read this post.', array( 'status' => 403 ) );
+    }
+
     $author = get_userdata( $post->post_author );
     $thumbnail_id = get_post_thumbnail_id( $post->ID );
 
@@ -1145,7 +1154,7 @@ function wp_content_abilities_create_post( $input ) {
     }
 
     // Handle author by username
-    if ( ! empty( $input['author'] ) ) {
+    if ( ! empty( $input['author'] ) && current_user_can( 'edit_others_posts' ) ) {
         $author = get_user_by( 'login', $input['author'] );
         if ( $author ) {
             $post_data['post_author'] = $author->ID;
@@ -1211,6 +1220,10 @@ function wp_content_abilities_update_post( $input ) {
 
     if ( ! $post || $post->post_type !== 'post' ) {
         return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
+    }
+
+    if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', array( 'status' => 403 ) );
     }
 
     $post_data = array( 'ID' => $input['id'] );
@@ -1288,6 +1301,10 @@ function wp_content_abilities_delete_post( $input ) {
         return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
     }
 
+    if ( ! current_user_can( 'delete_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to delete this post.', array( 'status' => 403 ) );
+    }
+
     $title = $post->post_title;
     $force = $input['force'] ?? false;
 
@@ -1309,9 +1326,14 @@ function wp_content_abilities_delete_post( $input ) {
  * List Pages callback
  */
 function wp_content_abilities_list_pages( $input ) {
+    $status = $input['status'] ?? 'any';
+    if ( 'any' === $status && ! current_user_can( 'edit_others_posts' ) ) {
+        $status = 'publish';
+    }
+
     $args = array(
         'post_type'      => 'page',
-        'post_status'    => $input['status'] ?? 'any',
+        'post_status'    => $status,
         'posts_per_page' => $input['per_page'] ?? 10,
         'paged'          => $input['page'] ?? 1,
         'orderby'        => $input['orderby'] ?? 'menu_order',
@@ -1357,6 +1379,10 @@ function wp_content_abilities_get_page( $input ) {
 
     if ( ! $post || $post->post_type !== 'page' ) {
         return new WP_Error( 'not_found', 'Page not found.', array( 'status' => 404 ) );
+    }
+
+    if ( ! current_user_can( 'read_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to read this page.', array( 'status' => 403 ) );
     }
 
     $thumbnail_id = get_post_thumbnail_id( $post->ID );
@@ -1431,6 +1457,10 @@ function wp_content_abilities_update_page( $input ) {
         return new WP_Error( 'not_found', 'Page not found.', array( 'status' => 404 ) );
     }
 
+    if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to edit this page.', array( 'status' => 403 ) );
+    }
+
     $post_data = array( 'ID' => $input['id'] );
 
     if ( isset( $input['title'] ) ) {
@@ -1495,6 +1525,10 @@ function wp_content_abilities_delete_page( $input ) {
 
     if ( ! $post || $post->post_type !== 'page' ) {
         return new WP_Error( 'not_found', 'Page not found.', array( 'status' => 404 ) );
+    }
+
+    if ( ! current_user_can( 'delete_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to delete this page.', array( 'status' => 403 ) );
     }
 
     $title = $post->post_title;
@@ -1576,6 +1610,13 @@ function wp_content_abilities_upload_media( $input ) {
     require_once ABSPATH . 'wp-admin/includes/image.php';
 
     $filename = sanitize_file_name( $input['filename'] );
+
+    // Reject disallowed extensions before fetching any data.
+    $ext_check = wp_check_filetype( $filename );
+    if ( empty( $ext_check['type'] ) ) {
+        return new WP_Error( 'invalid_filetype', 'Invalid file type.', array( 'status' => 400 ) );
+    }
+
     $image_data = null;
 
     // Get image data from base64 or URL
@@ -1585,7 +1626,20 @@ function wp_content_abilities_upload_media( $input ) {
             return new WP_Error( 'invalid_base64', 'Invalid base64 data.', array( 'status' => 400 ) );
         }
     } elseif ( ! empty( $input['url'] ) ) {
-        $response = wp_remote_get( $input['url'], array( 'timeout' => 30 ) );
+        $url = $input['url'];
+
+        // Validate URL and block private/internal addresses (SSRF prevention).
+        if ( ! wp_http_validate_url( $url ) ) {
+            return new WP_Error( 'invalid_url', 'Invalid URL provided.', array( 'status' => 400 ) );
+        }
+        $parsed = parse_url( $url );
+        $host   = $parsed['host'] ?? '';
+        $ip     = gethostbyname( $host );
+        if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
+            return new WP_Error( 'ssrf_blocked', 'URL resolves to a private or reserved address.', array( 'status' => 400 ) );
+        }
+
+        $response = wp_remote_get( $url, array( 'timeout' => 30 ) );
         if ( is_wp_error( $response ) ) {
             return new WP_Error( 'download_failed', 'Failed to download image: ' . $response->get_error_message(), array( 'status' => 400 ) );
         }
@@ -1598,27 +1652,32 @@ function wp_content_abilities_upload_media( $input ) {
         return new WP_Error( 'empty_image', 'Image data is empty.', array( 'status' => 400 ) );
     }
 
-    // Get upload directory
-    $upload_dir = wp_upload_dir();
-    if ( $upload_dir['error'] ) {
-        return new WP_Error( 'upload_dir_error', $upload_dir['error'], array( 'status' => 500 ) );
-    }
-
-    // Create unique filename
-    $unique_filename = wp_unique_filename( $upload_dir['path'], $filename );
-    $file_path = $upload_dir['path'] . '/' . $unique_filename;
-
-    // Save file
-    $saved = file_put_contents( $file_path, $image_data );
-    if ( $saved === false ) {
+    // Write to a temp file so wp_check_filetype_and_ext() can inspect actual content.
+    $tmp_file = wp_tempnam( $filename );
+    if ( false === file_put_contents( $tmp_file, $image_data ) ) {
         return new WP_Error( 'save_failed', 'Failed to save file.', array( 'status' => 500 ) );
     }
 
-    // Get file type
-    $filetype = wp_check_filetype( $unique_filename, null );
-    if ( empty( $filetype['type'] ) ) {
-        unlink( $file_path );
-        return new WP_Error( 'invalid_filetype', 'Invalid file type.', array( 'status' => 400 ) );
+    // Content-aware MIME validation (checks magic bytes, not just extension).
+    $filetype = wp_check_filetype_and_ext( $tmp_file, $filename );
+    if ( empty( $filetype['type'] ) || empty( $filetype['ext'] ) ) {
+        unlink( $tmp_file );
+        return new WP_Error( 'invalid_filetype', 'Invalid or disallowed file type.', array( 'status' => 400 ) );
+    }
+
+    // Get upload directory and move temp file into place.
+    $upload_dir = wp_upload_dir();
+    if ( $upload_dir['error'] ) {
+        unlink( $tmp_file );
+        return new WP_Error( 'upload_dir_error', $upload_dir['error'], array( 'status' => 500 ) );
+    }
+
+    $unique_filename = wp_unique_filename( $upload_dir['path'], $filename );
+    $file_path       = $upload_dir['path'] . '/' . $unique_filename;
+
+    if ( ! rename( $tmp_file, $file_path ) ) {
+        unlink( $tmp_file );
+        return new WP_Error( 'save_failed', 'Failed to move file to upload directory.', array( 'status' => 500 ) );
     }
 
     // Prepare attachment data
