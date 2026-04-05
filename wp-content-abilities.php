@@ -616,6 +616,7 @@ function wp_content_abilities_register() {
                 'featured_image' => array( 'type' => 'string' ),
                 'url'            => array( 'type' => 'string' ),
                 'lang'           => array( 'type' => 'string' ),
+                'translations'   => array( 'type' => 'object', 'description' => 'Map of language slug to page ID for all translations. Requires Polylang.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_get_page',
@@ -692,19 +693,24 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Language slug for the page (e.g. "en", "pt"). Requires Polylang.',
                 ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'description' => 'Page ID of the original page this is a translation of. Requires Polylang.',
+                ),
             ),
             'additionalProperties' => false,
         ),
         'output_schema' => array(
             'type'       => 'object',
             'properties' => array(
-                'id'       => array( 'type' => 'integer' ),
-                'title'    => array( 'type' => 'string' ),
-                'slug'     => array( 'type' => 'string' ),
-                'status'   => array( 'type' => 'string' ),
-                'url'      => array( 'type' => 'string' ),
-                'edit_url' => array( 'type' => 'string' ),
-                'lang'     => array( 'type' => 'string' ),
+                'id'           => array( 'type' => 'integer' ),
+                'title'        => array( 'type' => 'string' ),
+                'slug'         => array( 'type' => 'string' ),
+                'status'       => array( 'type' => 'string' ),
+                'url'          => array( 'type' => 'string' ),
+                'edit_url'     => array( 'type' => 'string' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to page ID for all translations.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_create_page',
@@ -784,19 +790,24 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Change the page language slug (e.g. "en", "pt"). Requires Polylang.',
                 ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'description' => 'Page ID of the original page this is a translation of. Requires Polylang.',
+                ),
             ),
             'additionalProperties' => false,
         ),
         'output_schema' => array(
             'type'       => 'object',
             'properties' => array(
-                'id'       => array( 'type' => 'integer' ),
-                'title'    => array( 'type' => 'string' ),
-                'slug'     => array( 'type' => 'string' ),
-                'status'   => array( 'type' => 'string' ),
-                'url'      => array( 'type' => 'string' ),
-                'modified' => array( 'type' => 'string' ),
-                'lang'     => array( 'type' => 'string' ),
+                'id'           => array( 'type' => 'integer' ),
+                'title'        => array( 'type' => 'string' ),
+                'slug'         => array( 'type' => 'string' ),
+                'status'       => array( 'type' => 'string' ),
+                'url'          => array( 'type' => 'string' ),
+                'modified'     => array( 'type' => 'string' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to page ID for all translations.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_update_page',
@@ -943,6 +954,11 @@ function wp_content_abilities_register() {
                     'maxLength'   => 200,
                     'description' => 'Search tags by name.',
                 ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Filter tags by language slug (e.g. "en", "pt"). Requires Polylang.',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -959,6 +975,7 @@ function wp_content_abilities_register() {
                             'slug'        => array( 'type' => 'string' ),
                             'description' => array( 'type' => 'string' ),
                             'count'       => array( 'type' => 'integer' ),
+                            'lang'        => array( 'type' => 'string' ),
                         ),
                     ),
                 ),
@@ -1029,17 +1046,28 @@ function wp_content_abilities_register() {
                     'maxLength'   => 5000,
                     'description' => 'Description of the media item.',
                 ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Language slug for this media item (e.g. "en", "pt"). Only applies when Polylang media translation is enabled.',
+                ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'description' => 'Attachment ID of the original media item this is a translation of. Only applies when Polylang media translation is enabled.',
+                ),
             ),
             'additionalProperties' => false,
         ),
         'output_schema' => array(
             'type'       => 'object',
             'properties' => array(
-                'id'       => array( 'type' => 'integer' ),
-                'url'      => array( 'type' => 'string' ),
-                'filename' => array( 'type' => 'string' ),
-                'title'    => array( 'type' => 'string' ),
-                'mime_type' => array( 'type' => 'string' ),
+                'id'           => array( 'type' => 'integer' ),
+                'url'          => array( 'type' => 'string' ),
+                'filename'     => array( 'type' => 'string' ),
+                'title'        => array( 'type' => 'string' ),
+                'mime_type'    => array( 'type' => 'string' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to attachment ID for all translations. Requires Polylang media translation.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_upload_media',
@@ -1090,6 +1118,11 @@ function wp_content_abilities_register() {
                     'maxLength'   => 200,
                     'description' => 'Search by filename or title.',
                 ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Filter by language slug (e.g. "en", "pt"). Only applies when Polylang media translation is enabled.',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -1101,12 +1134,14 @@ function wp_content_abilities_register() {
                     'items' => array(
                         'type'       => 'object',
                         'properties' => array(
-                            'id'        => array( 'type' => 'integer' ),
-                            'title'     => array( 'type' => 'string' ),
-                            'filename'  => array( 'type' => 'string' ),
-                            'url'       => array( 'type' => 'string' ),
-                            'mime_type' => array( 'type' => 'string' ),
-                            'date'      => array( 'type' => 'string' ),
+                            'id'           => array( 'type' => 'integer' ),
+                            'title'        => array( 'type' => 'string' ),
+                            'filename'     => array( 'type' => 'string' ),
+                            'url'          => array( 'type' => 'string' ),
+                            'mime_type'    => array( 'type' => 'string' ),
+                            'date'         => array( 'type' => 'string' ),
+                            'lang'         => array( 'type' => 'string' ),
+                            'translations' => array( 'type' => 'object' ),
                         ),
                     ),
                 ),
@@ -1160,10 +1195,61 @@ function wp_content_abilities_register() {
                         ),
                     ),
                 ),
-                'polylang_active' => array( 'type' => 'boolean' ),
+                'polylang_active'          => array( 'type' => 'boolean' ),
+                'media_translation_enabled' => array( 'type' => 'boolean', 'description' => 'Whether Polylang media translation is enabled. When true, media items have per-language versions; when false, media is shared across languages.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_list_languages',
+        'permission_callback' => function() {
+            return current_user_can( 'read' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => true,
+                'destructive' => false,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * Get Translation
+     */
+    wp_register_ability( 'content/get-translation', array(
+        'label'       => __( 'Get Translation', 'wp-content-abilities' ),
+        'description' => __( 'Given a post, page, or media ID and a target language slug, returns the ID and URL of the translated counterpart. Requires Polylang.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id', 'lang' ),
+            'properties' => array(
+                'id' => array(
+                    'type'        => 'integer',
+                    'description' => 'The source post, page, or media attachment ID.',
+                ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Target language slug (e.g. "pt", "en").',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'found'         => array( 'type' => 'boolean', 'description' => 'Whether a translation exists in the requested language.' ),
+                'id'            => array( 'type' => 'integer', 'description' => 'Translated post/page/media ID, or 0 if not found.' ),
+                'url'           => array( 'type' => 'string' ),
+                'lang'          => array( 'type' => 'string' ),
+                'source_id'     => array( 'type' => 'integer' ),
+                'source_lang'   => array( 'type' => 'string' ),
+                'all_translations' => array( 'type' => 'object', 'description' => 'Complete map of language slug to ID for all translations of the source.' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_get_translation',
         'permission_callback' => function() {
             return current_user_can( 'read' );
         },
@@ -1364,9 +1450,24 @@ function wp_content_abilities_create_post( $input ) {
         return $post_id;
     }
 
-    // Handle tags
+    // Handle tags — if Polylang lang is set, map to translated tag equivalents.
     if ( ! empty( $input['tags'] ) ) {
-        wp_set_post_tags( $post_id, $input['tags'] );
+        $lang = ! empty( $input['lang'] ) ? sanitize_key( $input['lang'] ) : '';
+        if ( $lang && function_exists( 'pll_get_term' ) ) {
+            $term_refs = array();
+            foreach ( $input['tags'] as $tag_name ) {
+                $term = get_term_by( 'slug', $tag_name, 'post_tag' )
+                     ?: get_term_by( 'name', $tag_name, 'post_tag' );
+                if ( $term ) {
+                    $term_refs[] = (int) ( pll_get_term( $term->term_id, $lang ) ?: $term->term_id );
+                } else {
+                    $term_refs[] = $tag_name; // new tag, wp_set_post_tags will create it
+                }
+            }
+            wp_set_post_tags( $post_id, $term_refs );
+        } else {
+            wp_set_post_tags( $post_id, $input['tags'] );
+        }
     }
 
     // Handle featured image — verify the attachment exists, is an image,
@@ -1481,9 +1582,26 @@ function wp_content_abilities_update_post( $input ) {
         wp_set_post_categories( $input['id'], $cat_ids );
     }
 
-    // Handle tags
+    // Handle tags — if Polylang lang is set, map to translated tag equivalents.
     if ( isset( $input['tags'] ) ) {
-        wp_set_post_tags( $input['id'], $input['tags'] );
+        $lang = ! empty( $input['lang'] ) ? sanitize_key( $input['lang'] ) : (
+            function_exists( 'pll_get_post_language' ) ? pll_get_post_language( $input['id'] ) : ''
+        );
+        if ( $lang && function_exists( 'pll_get_term' ) ) {
+            $term_refs = array();
+            foreach ( $input['tags'] as $tag_name ) {
+                $term = get_term_by( 'slug', $tag_name, 'post_tag' )
+                     ?: get_term_by( 'name', $tag_name, 'post_tag' );
+                if ( $term ) {
+                    $term_refs[] = (int) ( pll_get_term( $term->term_id, $lang ) ?: $term->term_id );
+                } else {
+                    $term_refs[] = $tag_name;
+                }
+            }
+            wp_set_post_tags( $input['id'], $term_refs );
+        } else {
+            wp_set_post_tags( $input['id'], $input['tags'] );
+        }
     }
 
     // Handle featured image — verify the attachment exists, is an image,
@@ -1654,6 +1772,7 @@ function wp_content_abilities_get_page( $input ) {
         'featured_image' => $thumbnail_id ? wp_get_attachment_url( $thumbnail_id ) : '',
         'url'            => get_permalink( $post->ID ),
         'lang'           => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
+        'translations'   => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
     );
 }
 
@@ -1699,21 +1818,30 @@ function wp_content_abilities_create_page( $input ) {
         }
     }
 
-    // Handle Polylang language.
+    // Handle Polylang language and translation linking.
     if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_post_language' ) ) {
-        pll_set_post_language( $post_id, sanitize_key( $input['lang'] ) );
+        $lang = sanitize_key( $input['lang'] );
+        pll_set_post_language( $post_id, $lang );
+
+        if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_post_translations' ) ) {
+            $original_id  = (int) $input['translation_of'];
+            $translations = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $original_id ) : array();
+            $translations[ $lang ] = $post_id;
+            pll_save_post_translations( $translations );
+        }
     }
 
     $post = get_post( $post_id );
 
     return array(
-        'id'       => $post_id,
-        'title'    => $post->post_title,
-        'slug'     => $post->post_name,
-        'status'   => $post->post_status,
-        'url'      => get_permalink( $post_id ),
-        'edit_url' => get_edit_post_link( $post_id, 'raw' ),
-        'lang'     => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post_id ) : '',
+        'id'           => $post_id,
+        'title'        => $post->post_title,
+        'slug'         => $post->post_name,
+        'status'       => $post->post_status,
+        'url'          => get_permalink( $post_id ),
+        'edit_url'     => get_edit_post_link( $post_id, 'raw' ),
+        'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post_id ) : '',
+        'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post_id ) : (object) array(),
     );
 }
 
@@ -1786,21 +1914,38 @@ function wp_content_abilities_update_page( $input ) {
         }
     }
 
-    // Handle Polylang language.
+    // Handle Polylang language and translation linking.
     if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_post_language' ) ) {
-        pll_set_post_language( $input['id'], sanitize_key( $input['lang'] ) );
+        $lang = sanitize_key( $input['lang'] );
+        pll_set_post_language( $input['id'], $lang );
+
+        if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_post_translations' ) ) {
+            $original_id  = (int) $input['translation_of'];
+            $translations = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $original_id ) : array();
+            $translations[ $lang ] = $input['id'];
+            pll_save_post_translations( $translations );
+        }
+    } elseif ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_post_translations' ) ) {
+        $lang        = function_exists( 'pll_get_post_language' ) ? pll_get_post_language( $input['id'] ) : '';
+        $original_id = (int) $input['translation_of'];
+        if ( $lang ) {
+            $translations         = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $original_id ) : array();
+            $translations[ $lang ] = $input['id'];
+            pll_save_post_translations( $translations );
+        }
     }
 
     $post = get_post( $input['id'] );
 
     return array(
-        'id'       => $post->ID,
-        'title'    => $post->post_title,
-        'slug'     => $post->post_name,
-        'status'   => $post->post_status,
-        'url'      => get_permalink( $post->ID ),
-        'modified' => $post->post_modified,
-        'lang'     => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
+        'id'           => $post->ID,
+        'title'        => $post->post_title,
+        'slug'         => $post->post_name,
+        'status'       => $post->post_status,
+        'url'          => get_permalink( $post->ID ),
+        'modified'     => $post->post_modified,
+        'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
+        'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
     );
 }
 
@@ -1878,6 +2023,11 @@ function wp_content_abilities_list_tags( $input ) {
         $args['search'] = $input['search'];
     }
 
+    // Polylang: filter by language slug if provided.
+    if ( ! empty( $input['lang'] ) && function_exists( 'pll_get_term_language' ) ) {
+        $args['lang'] = sanitize_key( $input['lang'] );
+    }
+
     $tags = get_tags( $args );
     $result = array();
 
@@ -1888,6 +2038,7 @@ function wp_content_abilities_list_tags( $input ) {
             'slug'        => $tag->slug,
             'description' => $tag->description,
             'count'       => $tag->count,
+            'lang'        => function_exists( 'pll_get_term_language' ) ? (string) pll_get_term_language( $tag->term_id ) : '',
         );
     }
 
@@ -1996,12 +2147,33 @@ function wp_content_abilities_upload_media( $input ) {
         update_post_meta( $attach_id, '_wp_attachment_image_alt', $input['alt_text'] );
     }
 
+    // Polylang media translation (only when the feature is enabled in Polylang settings).
+    $media_translation = function_exists( 'pll_is_translated_post_type' ) && pll_is_translated_post_type( 'attachment' );
+    if ( $media_translation ) {
+        if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_post_language' ) ) {
+            $lang = sanitize_key( $input['lang'] );
+            pll_set_post_language( $attach_id, $lang );
+
+            if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_post_translations' ) ) {
+                $original_id  = (int) $input['translation_of'];
+                $translations = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $original_id ) : array();
+                $translations[ $lang ] = $attach_id;
+                pll_save_post_translations( $translations );
+            }
+        }
+    }
+
+    $lang_out         = ( $media_translation && function_exists( 'pll_get_post_language' ) ) ? (string) pll_get_post_language( $attach_id ) : '';
+    $translations_out = ( $media_translation && function_exists( 'pll_get_post_translations' ) ) ? pll_get_post_translations( $attach_id ) : (object) array();
+
     return array(
-        'id'        => $attach_id,
-        'url'       => wp_get_attachment_url( $attach_id ),
-        'filename'  => $unique_filename,
-        'title'     => get_the_title( $attach_id ),
-        'mime_type' => $filetype['type'],
+        'id'           => $attach_id,
+        'url'          => wp_get_attachment_url( $attach_id ),
+        'filename'     => $unique_filename,
+        'title'        => get_the_title( $attach_id ),
+        'mime_type'    => $filetype['type'],
+        'lang'         => $lang_out,
+        'translations' => $translations_out,
     );
 }
 
@@ -2026,17 +2198,27 @@ function wp_content_abilities_list_media( $input ) {
         $args['s'] = $input['search'];
     }
 
+    // Polylang: filter by language only when media translation is enabled.
+    $media_translation = function_exists( 'pll_is_translated_post_type' ) && pll_is_translated_post_type( 'attachment' );
+    if ( $media_translation && ! empty( $input['lang'] ) && function_exists( 'pll_languages_list' ) ) {
+        $args['lang'] = sanitize_key( $input['lang'] );
+    }
+
     $query = new WP_Query( $args );
     $media = array();
 
     foreach ( $query->posts as $attachment ) {
+        $lang         = ( $media_translation && function_exists( 'pll_get_post_language' ) ) ? (string) pll_get_post_language( $attachment->ID ) : '';
+        $translations = ( $media_translation && function_exists( 'pll_get_post_translations' ) ) ? pll_get_post_translations( $attachment->ID ) : (object) array();
         $media[] = array(
-            'id'        => $attachment->ID,
-            'title'     => $attachment->post_title,
-            'filename'  => basename( get_attached_file( $attachment->ID ) ),
-            'url'       => wp_get_attachment_url( $attachment->ID ),
-            'mime_type' => $attachment->post_mime_type,
-            'date'      => $attachment->post_date,
+            'id'           => $attachment->ID,
+            'title'        => $attachment->post_title,
+            'filename'     => basename( get_attached_file( $attachment->ID ) ),
+            'url'          => wp_get_attachment_url( $attachment->ID ),
+            'mime_type'    => $attachment->post_mime_type,
+            'date'         => $attachment->post_date,
+            'lang'         => $lang,
+            'translations' => $translations,
         );
     }
 
@@ -2074,7 +2256,55 @@ function wp_content_abilities_list_languages( $input ) {
     }
 
     return array(
-        'languages'       => $languages,
-        'polylang_active' => true,
+        'languages'                => $languages,
+        'polylang_active'          => true,
+        'media_translation_enabled' => function_exists( 'pll_is_translated_post_type' ) && pll_is_translated_post_type( 'attachment' ),
+    );
+}
+
+/**
+ * Get Translation callback (Polylang)
+ */
+function wp_content_abilities_get_translation( $input ) {
+    if ( ! function_exists( 'pll_get_post' ) ) {
+        return new WP_Error( 'polylang_inactive', 'Polylang is not active.', array( 'status' => 503 ) );
+    }
+
+    $source_id   = (int) $input['id'];
+    $target_lang = sanitize_key( $input['lang'] );
+
+    $source_post = get_post( $source_id );
+    if ( ! $source_post ) {
+        return new WP_Error( 'not_found', 'Source post/page/media not found.', array( 'status' => 404 ) );
+    }
+
+    if ( ! current_user_can( 'read_post', $source_id ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to read this content.', array( 'status' => 403 ) );
+    }
+
+    $source_lang  = function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $source_id ) : '';
+    $all_trans    = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $source_id ) : array();
+    $trans_id     = (int) pll_get_post( $source_id, $target_lang );
+
+    if ( ! $trans_id ) {
+        return array(
+            'found'            => false,
+            'id'               => 0,
+            'url'              => '',
+            'lang'             => $target_lang,
+            'source_id'        => $source_id,
+            'source_lang'      => $source_lang,
+            'all_translations' => $all_trans ?: (object) array(),
+        );
+    }
+
+    return array(
+        'found'            => true,
+        'id'               => $trans_id,
+        'url'              => get_permalink( $trans_id ) ?: '',
+        'lang'             => $target_lang,
+        'source_id'        => $source_id,
+        'source_lang'      => $source_lang,
+        'all_translations' => $all_trans ?: (object) array(),
     );
 }
