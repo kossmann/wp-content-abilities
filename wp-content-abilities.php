@@ -1270,6 +1270,66 @@ function wp_content_abilities_register() {
 // =============================================================================
 
 /**
+ * Decode JSON unicode escapes in Gutenberg block comment attributes.
+ *
+ * When the WordPress block editor serialises block attributes it JSON-encodes
+ * characters like & as \u0026 (and < > as \u003C \u003E) for XSS safety.
+ * Returning those escape sequences verbatim to the AI is risky: models often
+ * strip the leading backslash during translation, producing the corrupt literal
+ * "u0026" instead of the correct "\u0026".
+ *
+ * This function replaces those escapes with the plain characters *only inside
+ * block-opening comment delimiters*, so the AI always sees a clean & character
+ * and can faithfully reproduce it. wp_content_abilities_normalize_block_json()
+ * then re-encodes correctly when the content is saved back.
+ *
+ * @param string $content Raw post_content from the database.
+ * @return string Content with block-attribute escapes decoded.
+ */
+function wp_content_abilities_decode_block_attrs( $content ) {
+    if ( strpos( $content, '<!-- wp:' ) === false ) {
+        return $content;
+    }
+    // Match only opening block comment lines: <!-- wp:name {...} -->
+    // The [^\n]* keeps the regex on a single line, which is how WP stores them.
+    return preg_replace_callback(
+        '/<!-- wp:[a-z\/][^\n]*? -->/i',
+        static function ( $m ) {
+            return str_replace(
+                array( '\u0026', '\u003C', '\u003E', '\u003c', '\u003e' ),
+                array( '&',      '<',      '>',      '<',      '>'      ),
+                $m[0]
+            );
+        },
+        $content
+    );
+}
+
+/**
+ * Normalize Gutenberg block JSON encoding before saving to the database.
+ *
+ * Uses WP core parse_blocks() + serialize_blocks() to re-serialise all block
+ * attributes. This ensures that & in URLs is stored as \u0026 (the encoding
+ * the block editor expects) regardless of how the AI encoded it when it sent
+ * the content back.
+ *
+ * Falls back silently to the original string if the WP functions are absent
+ * (< WP 5.0) or if the content contains no block markers.
+ *
+ * @param string $content Content from AI input.
+ * @return string Normalised content safe to pass to wp_insert_post / wp_update_post.
+ */
+function wp_content_abilities_normalize_block_json( $content ) {
+    if ( $content === '' || strpos( $content, '<!-- wp:' ) === false ) {
+        return $content;
+    }
+    if ( ! function_exists( 'parse_blocks' ) || ! function_exists( 'serialize_blocks' ) ) {
+        return $content;
+    }
+    return serialize_blocks( parse_blocks( $content ) );
+}
+
+/**
  * Resolve a requested post status to what the current user is allowed to see.
  *
  * Subscribers (capability: read) may only list published content.
@@ -1383,7 +1443,7 @@ function wp_content_abilities_get_post( $input ) {
         'id'             => $post->ID,
         'title'          => $post->post_title,
         'slug'           => $post->post_name,
-        'content'        => $post->post_content,
+        'content'        => wp_content_abilities_decode_block_attrs( $post->post_content ),
         'excerpt'        => $post->post_excerpt,
         'status'         => $post->post_status,
         'date'           => $post->post_date,
@@ -1406,7 +1466,7 @@ function wp_content_abilities_create_post( $input ) {
     $post_data = array(
         'post_type'      => 'post',
         'post_title'     => $input['title'],
-        'post_content'   => $input['content'] ?? '',
+        'post_content'   => wp_content_abilities_normalize_block_json( $input['content'] ?? '' ),
         'post_excerpt'   => $input['excerpt'] ?? '',
         'post_status'    => $input['status'] ?? 'draft',
         'post_name'      => $input['slug'] ?? '',
@@ -1541,7 +1601,7 @@ function wp_content_abilities_update_post( $input ) {
         $post_data['post_title'] = $input['title'];
     }
     if ( isset( $input['content'] ) ) {
-        $post_data['post_content'] = $input['content'];
+        $post_data['post_content'] = wp_content_abilities_normalize_block_json( $input['content'] );
     }
     if ( isset( $input['excerpt'] ) ) {
         $post_data['post_excerpt'] = $input['excerpt'];
@@ -1761,7 +1821,7 @@ function wp_content_abilities_get_page( $input ) {
         'id'             => $post->ID,
         'title'          => $post->post_title,
         'slug'           => $post->post_name,
-        'content'        => $post->post_content,
+        'content'        => wp_content_abilities_decode_block_attrs( $post->post_content ),
         'excerpt'        => $post->post_excerpt,
         'status'         => $post->post_status,
         'date'           => $post->post_date,
@@ -1783,7 +1843,7 @@ function wp_content_abilities_create_page( $input ) {
     $post_data = array(
         'post_type'    => 'page',
         'post_title'   => $input['title'],
-        'post_content' => $input['content'] ?? '',
+        'post_content' => wp_content_abilities_normalize_block_json( $input['content'] ?? '' ),
         'post_excerpt' => $input['excerpt'] ?? '',
         'post_status'  => $input['status'] ?? 'draft',
         'post_name'    => $input['slug'] ?? '',
@@ -1865,7 +1925,7 @@ function wp_content_abilities_update_page( $input ) {
         $post_data['post_title'] = $input['title'];
     }
     if ( isset( $input['content'] ) ) {
-        $post_data['post_content'] = $input['content'];
+        $post_data['post_content'] = wp_content_abilities_normalize_block_json( $input['content'] );
     }
     if ( isset( $input['excerpt'] ) ) {
         $post_data['post_excerpt'] = $input['excerpt'];
