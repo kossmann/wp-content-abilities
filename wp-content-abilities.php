@@ -884,7 +884,6 @@ function wp_content_abilities_register() {
         'description' => __( 'Retrieves all categories with their post counts.', 'wp-content-abilities' ),
         'category'    => 'content',
         'input_schema' => array(
-            'type'       => 'object',
             'properties' => array(
                 'hide_empty' => array(
                     'type'        => 'boolean',
@@ -942,7 +941,6 @@ function wp_content_abilities_register() {
         'description' => __( 'Retrieves all tags with their post counts.', 'wp-content-abilities' ),
         'category'    => 'content',
         'input_schema' => array(
-            'type'       => 'object',
             'properties' => array(
                 'hide_empty' => array(
                     'type'        => 'boolean',
@@ -1175,11 +1173,6 @@ function wp_content_abilities_register() {
         'label'       => __( 'List Languages', 'wp-content-abilities' ),
         'description' => __( 'Returns all languages configured in Polylang. Use the slug value as the lang parameter in other abilities.', 'wp-content-abilities' ),
         'category'    => 'content',
-        'input_schema' => array(
-            'type'                 => 'object',
-            'properties'           => (object) array(),
-            'additionalProperties' => false,
-        ),
         'output_schema' => array(
             'type'       => 'object',
             'properties' => array(
