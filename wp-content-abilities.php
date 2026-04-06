@@ -1286,7 +1286,7 @@ function wp_content_abilities_decode_block_attrs( $content ) {
     // Match only opening block comment lines: <!-- wp:name {...} -->
     // The [^\n]* keeps the regex on a single line, which is how WP stores them.
     return preg_replace_callback(
-        '/<!-- wp:[a-z\/][^\n]*? -->/i',
+        '/<!-- wp:[a-z\/][^\n]* -->/i',
         static function ( $m ) {
             return str_replace(
                 array( '\u0026', '\u003C', '\u003E', '\u003c', '\u003e' ),
@@ -1301,13 +1301,16 @@ function wp_content_abilities_decode_block_attrs( $content ) {
 /**
  * Normalize Gutenberg block JSON encoding before saving to the database.
  *
- * Uses WP core parse_blocks() + serialize_blocks() to re-serialise all block
- * attributes. This ensures that & in URLs is stored as \u0026 (the encoding
- * the block editor expects) regardless of how the AI encoded it when it sent
- * the content back.
+ * Two-step process:
  *
- * Falls back silently to the original string if the WP functions are absent
- * (< WP 5.0) or if the content contains no block markers.
+ * 1. parse_blocks() + serialize_blocks() re-serialises block attributes
+ *    through WordPress's own encoder, which converts & → \u0026 etc.
+ *
+ * 2. A direct regex pass then fixes any remaining bare uXXXX sequences that
+ *    are NOT preceded by a backslash (i.e. the AI dropped the leading \).
+ *    parse_blocks/serialize_blocks alone cannot fix "u0026" → "\u0026"
+ *    because PHP's json_encode treats "u0026" as ordinary text and emits it
+ *    unchanged; only the regex catches that specific case.
  *
  * @param string $content Content from AI input.
  * @return string Normalised content safe to pass to wp_insert_post / wp_update_post.
@@ -1316,10 +1319,29 @@ function wp_content_abilities_normalize_block_json( $content ) {
     if ( $content === '' || strpos( $content, '<!-- wp:' ) === false ) {
         return $content;
     }
-    if ( ! function_exists( 'parse_blocks' ) || ! function_exists( 'serialize_blocks' ) ) {
-        return $content;
+
+    // Step 1: re-serialise via WP core (handles & → \u0026 and similar).
+    if ( function_exists( 'parse_blocks' ) && function_exists( 'serialize_blocks' ) ) {
+        $serialized = serialize_blocks( parse_blocks( $content ) );
+        if ( ! empty( $serialized ) ) {
+            $content = $serialized;
+        }
     }
-    return serialize_blocks( parse_blocks( $content ) );
+
+    // Step 2: safety-net regex — fix bare uXXXX escapes (backslash dropped by AI)
+    // only inside opening block comment delimiters <!-- wp:name {...} -->.
+    // The lookbehind (?<!\\) ensures we never double-add the backslash to an
+    // already-correct \u0026.
+    return preg_replace_callback(
+        '/<!-- wp:[a-z\/][^\n]* -->/i',
+        static function ( $m ) {
+            $c = preg_replace( '/(?<!\\\\)u0026/i', '\\\\u0026', $m[0] );
+            $c = preg_replace( '/(?<!\\\\)u003[Cc]/',  '\\\\u003C', $c );
+            $c = preg_replace( '/(?<!\\\\)u003[Ee]/',  '\\\\u003E', $c );
+            return $c;
+        },
+        $content
+    );
 }
 
 /**
