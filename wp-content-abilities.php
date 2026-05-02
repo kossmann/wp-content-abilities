@@ -88,6 +88,7 @@ function wp_content_abilities_register() {
                 ),
                 'author' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Filter by author ID.',
                 ),
                 'orderby' => array(
@@ -142,6 +143,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -164,6 +166,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The post ID.',
                 ),
             ),
@@ -196,6 +199,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -257,10 +261,12 @@ function wp_content_abilities_register() {
                 'date' => array(
                     'type'        => 'string',
                     'maxLength'   => 30,
-                    'description' => 'Publish date (ISO 8601 format). For scheduled posts, use status=future.',
+                    'pattern'     => '^\\d{4}-\\d{2}-\\d{2}([T ]\\d{2}:\\d{2}(:\\d{2})?(Z|[+-]\\d{2}:?\\d{2})?)?$',
+                    'description' => 'Publish date (ISO 8601 format, e.g. "2026-05-02T14:30:00"). For scheduled posts, use status=future.',
                 ),
                 'featured_image_id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Media library ID for featured image.',
                 ),
                 'format' => array(
@@ -298,6 +304,7 @@ function wp_content_abilities_register() {
                 ),
                 'translation_of' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Post ID of the original post this is a translation of. Requires Polylang. Automatically links this post as a translation and maps categories to their translated equivalents.',
                 ),
             ),
@@ -319,10 +326,11 @@ function wp_content_abilities_register() {
         ),
         'execute_callback'    => 'wp_content_abilities_create_post',
         'permission_callback' => function() {
-            return current_user_can( 'publish_posts' );
+            return current_user_can( 'edit_posts' );
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
@@ -345,6 +353,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The post ID to update.',
                 ),
                 'title' => array(
@@ -387,11 +396,32 @@ function wp_content_abilities_register() {
                 'date' => array(
                     'type'        => 'string',
                     'maxLength'   => 30,
-                    'description' => 'New publish date (ISO 8601 format).',
+                    'pattern'     => '^\\d{4}-\\d{2}-\\d{2}([T ]\\d{2}:\\d{2}(:\\d{2})?(Z|[+-]\\d{2}:?\\d{2})?)?$',
+                    'description' => 'New publish date (ISO 8601 format, e.g. "2026-05-02T14:30:00").',
                 ),
                 'featured_image_id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 0,
                     'description' => 'Media library ID for featured image. Use 0 to remove.',
+                ),
+                'comment_status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'open', 'closed' ),
+                    'description' => 'Whether comments are allowed.',
+                ),
+                'ping_status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'open', 'closed' ),
+                    'description' => 'Whether pingbacks/trackbacks are allowed.',
+                ),
+                'format' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'standard', 'aside', 'gallery', 'link', 'image', 'quote', 'status', 'video', 'audio', 'chat' ),
+                    'description' => 'Post format.',
+                ),
+                'sticky' => array(
+                    'type'        => 'boolean',
+                    'description' => 'Pin post to front page.',
                 ),
                 'lang' => array(
                     'type'        => 'string',
@@ -400,6 +430,7 @@ function wp_content_abilities_register() {
                 ),
                 'translation_of' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Post ID of the original post this is a translation of. Requires Polylang. Links this post into the translation group of the given post.',
                 ),
             ),
@@ -424,11 +455,12 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
-                'destructive' => false,
-                'idempotent'  => true,
+                'destructive' => true,
+                'idempotent'  => false,
             ),
         ),
     ) );
@@ -446,6 +478,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The post ID to delete.',
                 ),
                 'force' => array(
@@ -471,6 +504,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
@@ -496,7 +530,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'status' => array(
                     'type'        => 'string',
-                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'any' ),
+                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'future', 'any' ),
                     'default'     => 'any',
                     'description' => 'Filter by page status.',
                 ),
@@ -520,6 +554,7 @@ function wp_content_abilities_register() {
                 ),
                 'parent' => array(
                     'type'        => 'integer',
+                    'minimum'     => 0,
                     'description' => 'Filter by parent page ID. Use 0 for top-level pages.',
                 ),
                 'orderby' => array(
@@ -572,6 +607,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -594,6 +630,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The page ID.',
                 ),
             ),
@@ -625,6 +662,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -673,7 +711,8 @@ function wp_content_abilities_register() {
                 ),
                 'parent' => array(
                     'type'        => 'integer',
-                    'description' => 'Parent page ID for hierarchical pages.',
+                    'minimum'     => 0,
+                    'description' => 'Parent page ID for hierarchical pages. Use 0 for top-level.',
                 ),
                 'menu_order' => array(
                     'type'        => 'integer',
@@ -686,6 +725,7 @@ function wp_content_abilities_register() {
                 ),
                 'featured_image_id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Media library ID for featured image.',
                 ),
                 'lang' => array(
@@ -695,6 +735,7 @@ function wp_content_abilities_register() {
                 ),
                 'translation_of' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Page ID of the original page this is a translation of. Requires Polylang.',
                 ),
             ),
@@ -715,10 +756,11 @@ function wp_content_abilities_register() {
         ),
         'execute_callback'    => 'wp_content_abilities_create_page',
         'permission_callback' => function() {
-            return current_user_can( 'publish_pages' );
+            return current_user_can( 'edit_pages' );
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
@@ -741,6 +783,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The page ID to update.',
                 ),
                 'title' => array(
@@ -770,7 +813,8 @@ function wp_content_abilities_register() {
                 ),
                 'parent' => array(
                     'type'        => 'integer',
-                    'description' => 'New parent page ID.',
+                    'minimum'     => 0,
+                    'description' => 'New parent page ID. Use 0 for top-level.',
                 ),
                 'menu_order' => array(
                     'type'        => 'integer',
@@ -783,6 +827,7 @@ function wp_content_abilities_register() {
                 ),
                 'featured_image_id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 0,
                     'description' => 'Media library ID for featured image. Use 0 to remove.',
                 ),
                 'lang' => array(
@@ -792,6 +837,7 @@ function wp_content_abilities_register() {
                 ),
                 'translation_of' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Page ID of the original page this is a translation of. Requires Polylang.',
                 ),
             ),
@@ -816,11 +862,12 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
-                'destructive' => false,
-                'idempotent'  => true,
+                'destructive' => true,
+                'idempotent'  => false,
             ),
         ),
     ) );
@@ -838,6 +885,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The page ID to delete.',
                 ),
                 'force' => array(
@@ -863,6 +911,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
@@ -924,6 +973,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -985,6 +1035,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -1051,6 +1102,7 @@ function wp_content_abilities_register() {
                 ),
                 'translation_of' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'Attachment ID of the original media item this is a translation of. Only applies when Polylang media translation is enabled.',
                 ),
             ),
@@ -1074,6 +1126,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => false,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => false,
@@ -1153,6 +1206,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -1198,6 +1252,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -1220,6 +1275,7 @@ function wp_content_abilities_register() {
             'properties' => array(
                 'id' => array(
                     'type'        => 'integer',
+                    'minimum'     => 1,
                     'description' => 'The source post, page, or media attachment ID.',
                 ),
                 'lang' => array(
@@ -1248,6 +1304,7 @@ function wp_content_abilities_register() {
         },
         'meta' => array(
             'show_in_rest' => true,
+            'readonly'     => true,
             'mcp'          => array( 'public' => true, 'type' => 'tool' ),
             'annotations'  => array(
                 'readonly'    => true,
@@ -1380,6 +1437,33 @@ function wp_content_abilities_resolve_status( $requested, $post_type = 'post' ) 
 }
 
 /**
+ * Authorize a write to the given post status.
+ *
+ * wp_insert_post / wp_update_post don't enforce capability-per-status when
+ * called outside the admin UI — a Contributor with edit_posts could otherwise
+ * publish or set 'private' by passing the status string directly.
+ *
+ * @param string $status    The target post status.
+ * @param string $post_type 'post' or 'page' — picks the *_pages variants.
+ * @return true|WP_Error    True if allowed; WP_Error with status 403 otherwise.
+ */
+function wp_content_abilities_check_status_cap( $status, $post_type = 'post' ) {
+    $publish_cap = ( 'page' === $post_type ) ? 'publish_pages'         : 'publish_posts';
+    $private_cap = ( 'page' === $post_type ) ? 'publish_pages'         : 'publish_posts'; // WP doesn't expose publish_private_pages; use publish_pages.
+    if ( 'post' === $post_type ) {
+        $private_cap = 'publish_private_posts';
+    }
+
+    if ( in_array( $status, array( 'publish', 'future' ), true ) && ! current_user_can( $publish_cap ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to publish.', array( 'status' => 403 ) );
+    }
+    if ( 'private' === $status && ! current_user_can( $private_cap ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to create private content.', array( 'status' => 403 ) );
+    }
+    return true;
+}
+
+/**
  * List Posts callback
  */
 function wp_content_abilities_list_posts( $input ) {
@@ -1448,12 +1532,11 @@ function wp_content_abilities_list_posts( $input ) {
 function wp_content_abilities_get_post( $input ) {
     $post = get_post( $input['id'] );
 
-    if ( ! $post || $post->post_type !== 'post' ) {
+    // Return identical "not found" for missing-ID, wrong-type, AND no-permission
+    // cases so unauthenticated probes can't distinguish private/draft existence
+    // from non-existence.
+    if ( ! $post || $post->post_type !== 'post' || ! current_user_can( 'read_post', $post->ID ) ) {
         return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
-    }
-
-    if ( ! current_user_can( 'read_post', $post->ID ) ) {
-        return new WP_Error( 'forbidden', 'You do not have permission to read this post.', array( 'status' => 403 ) );
     }
 
     $author = get_userdata( $post->post_author );
@@ -1483,12 +1566,19 @@ function wp_content_abilities_get_post( $input ) {
  * Create Post callback
  */
 function wp_content_abilities_create_post( $input ) {
+    $status = $input['status'] ?? 'draft';
+
+    $cap_check = wp_content_abilities_check_status_cap( $status, 'post' );
+    if ( is_wp_error( $cap_check ) ) {
+        return $cap_check;
+    }
+
     $post_data = array(
         'post_type'      => 'post',
         'post_title'     => $input['title'],
         'post_content'   => wp_content_abilities_normalize_block_json( $input['content'] ?? '' ),
         'post_excerpt'   => $input['excerpt'] ?? '',
-        'post_status'    => $input['status'] ?? 'draft',
+        'post_status'    => $status,
         'post_name'      => $input['slug'] ?? '',
         'comment_status' => $input['comment_status'] ?? 'closed',
         'ping_status'    => $input['ping_status'] ?? 'closed',
@@ -1615,6 +1705,13 @@ function wp_content_abilities_update_post( $input ) {
         return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', array( 'status' => 403 ) );
     }
 
+    if ( isset( $input['status'] ) ) {
+        $cap_check = wp_content_abilities_check_status_cap( $input['status'], 'post' );
+        if ( is_wp_error( $cap_check ) ) {
+            return $cap_check;
+        }
+    }
+
     $post_data = array( 'ID' => $input['id'] );
 
     if ( isset( $input['title'] ) ) {
@@ -1635,11 +1732,35 @@ function wp_content_abilities_update_post( $input ) {
     if ( isset( $input['date'] ) ) {
         $post_data['post_date'] = $input['date'];
     }
+    if ( isset( $input['comment_status'] ) ) {
+        $post_data['comment_status'] = $input['comment_status'];
+    }
+    if ( isset( $input['ping_status'] ) ) {
+        $post_data['ping_status'] = $input['ping_status'];
+    }
 
     $result = wp_update_post( $post_data, true );
 
     if ( is_wp_error( $result ) ) {
         return $result;
+    }
+
+    // Post format
+    if ( isset( $input['format'] ) ) {
+        if ( 'standard' === $input['format'] ) {
+            set_post_format( $input['id'], false );
+        } else {
+            set_post_format( $input['id'], $input['format'] );
+        }
+    }
+
+    // Sticky
+    if ( isset( $input['sticky'] ) ) {
+        if ( true === $input['sticky'] ) {
+            stick_post( $input['id'] );
+        } else {
+            unstick_post( $input['id'] );
+        }
     }
 
     // Handle categories — if Polylang lang is set, try to map to translated category equivalents.
@@ -1827,12 +1948,11 @@ function wp_content_abilities_list_pages( $input ) {
 function wp_content_abilities_get_page( $input ) {
     $post = get_post( $input['id'] );
 
-    if ( ! $post || $post->post_type !== 'page' ) {
+    // Return identical "not found" for missing-ID, wrong-type, AND no-permission
+    // cases so unauthenticated probes can't distinguish private/draft existence
+    // from non-existence.
+    if ( ! $post || $post->post_type !== 'page' || ! current_user_can( 'read_post', $post->ID ) ) {
         return new WP_Error( 'not_found', 'Page not found.', array( 'status' => 404 ) );
-    }
-
-    if ( ! current_user_can( 'read_post', $post->ID ) ) {
-        return new WP_Error( 'forbidden', 'You do not have permission to read this page.', array( 'status' => 403 ) );
     }
 
     $thumbnail_id = get_post_thumbnail_id( $post->ID );
@@ -1860,14 +1980,30 @@ function wp_content_abilities_get_page( $input ) {
  * Create Page callback
  */
 function wp_content_abilities_create_page( $input ) {
+    $status = $input['status'] ?? 'draft';
+
+    $cap_check = wp_content_abilities_check_status_cap( $status, 'page' );
+    if ( is_wp_error( $cap_check ) ) {
+        return $cap_check;
+    }
+
+    // Validate parent: must exist and be a page.
+    $parent_id = isset( $input['parent'] ) ? (int) $input['parent'] : 0;
+    if ( $parent_id > 0 ) {
+        $parent_post = get_post( $parent_id );
+        if ( ! $parent_post || 'page' !== $parent_post->post_type ) {
+            return new WP_Error( 'invalid_parent', 'Parent page not found.', array( 'status' => 400 ) );
+        }
+    }
+
     $post_data = array(
         'post_type'    => 'page',
         'post_title'   => $input['title'],
         'post_content' => wp_content_abilities_normalize_block_json( $input['content'] ?? '' ),
         'post_excerpt' => $input['excerpt'] ?? '',
-        'post_status'  => $input['status'] ?? 'draft',
+        'post_status'  => $status,
         'post_name'    => $input['slug'] ?? '',
-        'post_parent'  => $input['parent'] ?? 0,
+        'post_parent'  => $parent_id,
         'menu_order'   => $input['menu_order'] ?? 0,
     );
 
@@ -1887,12 +2023,12 @@ function wp_content_abilities_create_page( $input ) {
     }
 
     // Handle featured image — verify the attachment exists, is an image,
-    // and belongs to the current user (or the user can edit others' posts).
+    // and belongs to the current user (or the user can edit others' pages).
     if ( ! empty( $input['featured_image_id'] ) ) {
         $attachment = get_post( $input['featured_image_id'] );
         if ( $attachment && 'attachment' === $attachment->post_type
             && wp_attachment_is_image( $attachment->ID )
-            && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_posts' ) )
+            && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_pages' ) )
         ) {
             set_post_thumbnail( $post_id, $attachment->ID );
         }
@@ -1939,6 +2075,32 @@ function wp_content_abilities_update_page( $input ) {
         return new WP_Error( 'forbidden', 'You do not have permission to edit this page.', array( 'status' => 403 ) );
     }
 
+    if ( isset( $input['status'] ) ) {
+        $cap_check = wp_content_abilities_check_status_cap( $input['status'], 'page' );
+        if ( is_wp_error( $cap_check ) ) {
+            return $cap_check;
+        }
+    }
+
+    // Validate new parent: must exist, be a page, and not create a cycle.
+    if ( isset( $input['parent'] ) ) {
+        $new_parent = (int) $input['parent'];
+        if ( $new_parent > 0 ) {
+            if ( $new_parent === (int) $input['id'] ) {
+                return new WP_Error( 'invalid_parent', 'A page cannot be its own parent.', array( 'status' => 400 ) );
+            }
+            $parent_post = get_post( $new_parent );
+            if ( ! $parent_post || 'page' !== $parent_post->post_type ) {
+                return new WP_Error( 'invalid_parent', 'Parent page not found.', array( 'status' => 400 ) );
+            }
+            // Walk ancestry of the proposed parent; reject if this page is in it (cycle).
+            $ancestors = get_post_ancestors( $new_parent );
+            if ( in_array( (int) $input['id'], array_map( 'intval', $ancestors ), true ) ) {
+                return new WP_Error( 'invalid_parent', 'Setting this parent would create a hierarchy cycle.', array( 'status' => 400 ) );
+            }
+        }
+    }
+
     $post_data = array( 'ID' => $input['id'] );
 
     if ( isset( $input['title'] ) ) {
@@ -1957,7 +2119,7 @@ function wp_content_abilities_update_page( $input ) {
         $post_data['post_name'] = $input['slug'];
     }
     if ( isset( $input['parent'] ) ) {
-        $post_data['post_parent'] = $input['parent'];
+        $post_data['post_parent'] = (int) $input['parent'];
     }
     if ( isset( $input['menu_order'] ) ) {
         $post_data['menu_order'] = $input['menu_order'];
@@ -1979,7 +2141,7 @@ function wp_content_abilities_update_page( $input ) {
     }
 
     // Handle featured image — verify the attachment exists, is an image,
-    // and belongs to the current user (or the user can edit others' posts).
+    // and belongs to the current user (or the user can edit others' pages).
     if ( isset( $input['featured_image_id'] ) ) {
         if ( 0 === $input['featured_image_id'] ) {
             delete_post_thumbnail( $input['id'] );
@@ -1987,7 +2149,7 @@ function wp_content_abilities_update_page( $input ) {
             $attachment = get_post( $input['featured_image_id'] );
             if ( $attachment && 'attachment' === $attachment->post_type
                 && wp_attachment_is_image( $attachment->ID )
-                && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_posts' ) )
+                && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( 'edit_others_pages' ) )
             ) {
                 set_post_thumbnail( $input['id'], $attachment->ID );
             }
@@ -2165,6 +2327,10 @@ function wp_content_abilities_upload_media( $input ) {
         if ( is_wp_error( $response ) ) {
             return new WP_Error( 'download_failed', 'Failed to download image: ' . $response->get_error_message(), array( 'status' => 400 ) );
         }
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        if ( 200 !== $code ) {
+            return new WP_Error( 'download_failed', sprintf( 'Remote returned HTTP %d.', $code ), array( 'status' => 400 ) );
+        }
         $image_data = wp_remote_retrieve_body( $response );
     } else {
         return new WP_Error( 'no_image_data', 'Either base64 or url must be provided.', array( 'status' => 400 ) );
@@ -2185,6 +2351,13 @@ function wp_content_abilities_upload_media( $input ) {
     if ( empty( $filetype['type'] ) || empty( $filetype['ext'] ) ) {
         unlink( $tmp_file );
         return new WP_Error( 'invalid_filetype', 'Invalid or disallowed file type.', array( 'status' => 400 ) );
+    }
+
+    // If WP detected an extension mismatch (e.g. evil.jpg actually a PNG),
+    // use the corrected filename so the file lands on disk with a name that
+    // matches its real MIME type.
+    if ( ! empty( $filetype['proper_filename'] ) ) {
+        $filename = $filetype['proper_filename'];
     }
 
     // Get upload directory and move temp file into place.
@@ -2224,7 +2397,7 @@ function wp_content_abilities_upload_media( $input ) {
 
     // Set alt text
     if ( ! empty( $input['alt_text'] ) ) {
-        update_post_meta( $attach_id, '_wp_attachment_image_alt', $input['alt_text'] );
+        update_post_meta( $attach_id, '_wp_attachment_image_alt', sanitize_text_field( $input['alt_text'] ) );
     }
 
     // Polylang media translation (only when the feature is enabled in Polylang settings).
