@@ -1408,6 +1408,130 @@ function wp_content_abilities_register() {
             ),
         ),
     ) );
+
+    // =========================================================================
+    // REVISION ABILITIES
+    // =========================================================================
+
+    /**
+     * List Revisions
+     *
+     * Gives an AI an undo trail. Pair with restore-revision to recover from a
+     * bad update.
+     */
+    wp_register_ability( 'content/list-revisions', array(
+        'label'       => __( 'List Revisions', 'wp-content-abilities' ),
+        'description' => __( 'Lists all revisions of a post or page in reverse-chronological order, including author and modification time.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id' ),
+            'properties' => array(
+                'id' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'The parent post or page ID.',
+                ),
+                'per_page' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'maximum'     => 100,
+                    'default'     => 20,
+                    'description' => 'Maximum revisions to return.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'revisions' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'id'          => array( 'type' => 'integer' ),
+                            'parent_id'   => array( 'type' => 'integer' ),
+                            'author'      => array( 'type' => 'integer' ),
+                            'author_name' => array( 'type' => 'string' ),
+                            'date'        => array( 'type' => 'string' ),
+                            'modified'    => array( 'type' => 'string' ),
+                            'title'       => array( 'type' => 'string' ),
+                            'is_autosave' => array( 'type' => 'boolean' ),
+                        ),
+                    ),
+                ),
+                'total' => array( 'type' => 'integer' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_list_revisions',
+        'permission_callback' => function() {
+            return current_user_can( 'edit_posts' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => true,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => true,
+                'destructive' => false,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * Restore Revision
+     *
+     * Reverts a post or page to the state captured by a specific revision.
+     * The current state becomes a new revision (no data loss).
+     */
+    wp_register_ability( 'content/restore-revision', array(
+        'label'       => __( 'Restore Revision', 'wp-content-abilities' ),
+        'description' => __( 'Reverts a post or page to a specific revision. The current state becomes a new revision so the change is itself reversible.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id', 'revision_id' ),
+            'properties' => array(
+                'id' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'The parent post or page ID.',
+                ),
+                'revision_id' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'The revision ID to restore (from list-revisions).',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'          => array( 'type' => 'integer' ),
+                'revision_id' => array( 'type' => 'integer' ),
+                'restored'    => array( 'type' => 'boolean' ),
+                'modified'    => array( 'type' => 'string' ),
+                'url'         => array( 'type' => 'string' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_restore_revision',
+        'permission_callback' => function() {
+            return current_user_can( 'edit_posts' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
 }
 
 // =============================================================================
@@ -2721,5 +2845,85 @@ function wp_content_abilities_list_untranslated( $input ) {
         'total_source'    => (int) $query->found_posts,
         'total_pages'     => (int) $query->max_num_pages,
         'polylang_active' => true,
+    );
+}
+
+/**
+ * List Revisions callback
+ */
+function wp_content_abilities_list_revisions( $input ) {
+    $parent = get_post( $input['id'] );
+    if ( ! $parent || ! in_array( $parent->post_type, array( 'post', 'page' ), true ) ) {
+        return new WP_Error( 'not_found', 'Post or page not found.', array( 'status' => 404 ) );
+    }
+
+    if ( ! current_user_can( 'edit_post', $parent->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to view revisions of this content.', array( 'status' => 403 ) );
+    }
+
+    $per_page  = $input['per_page'] ?? 20;
+    $revisions = wp_get_post_revisions(
+        $parent->ID,
+        array(
+            'posts_per_page' => $per_page,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        )
+    );
+
+    $out = array();
+    foreach ( $revisions as $rev ) {
+        $author = get_userdata( $rev->post_author );
+        $out[]  = array(
+            'id'          => (int) $rev->ID,
+            'parent_id'   => (int) $rev->post_parent,
+            'author'      => (int) $rev->post_author,
+            'author_name' => $author ? $author->display_name : '',
+            'date'        => $rev->post_date,
+            'modified'    => $rev->post_modified,
+            'title'       => $rev->post_title,
+            'is_autosave' => wp_is_post_autosave( $rev ) ? true : false,
+        );
+    }
+
+    return array(
+        'revisions' => $out,
+        'total'     => count( $out ),
+    );
+}
+
+/**
+ * Restore Revision callback
+ */
+function wp_content_abilities_restore_revision( $input ) {
+    $parent = get_post( $input['id'] );
+    if ( ! $parent || ! in_array( $parent->post_type, array( 'post', 'page' ), true ) ) {
+        return new WP_Error( 'not_found', 'Post or page not found.', array( 'status' => 404 ) );
+    }
+
+    if ( ! current_user_can( 'edit_post', $parent->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to edit this content.', array( 'status' => 403 ) );
+    }
+
+    $revision = wp_get_post_revision( $input['revision_id'] );
+    if ( ! $revision || (int) $revision->post_parent !== (int) $parent->ID ) {
+        return new WP_Error( 'invalid_revision', 'Revision does not belong to the given parent.', array( 'status' => 400 ) );
+    }
+
+    $result = wp_restore_post_revision( $revision->ID );
+    if ( ! $result || is_wp_error( $result ) ) {
+        return is_wp_error( $result )
+            ? $result
+            : new WP_Error( 'restore_failed', 'Failed to restore revision.', array( 'status' => 500 ) );
+    }
+
+    $restored = get_post( $parent->ID );
+
+    return array(
+        'id'          => (int) $parent->ID,
+        'revision_id' => (int) $revision->ID,
+        'restored'    => true,
+        'modified'    => $restored ? $restored->post_modified : '',
+        'url'         => get_permalink( $parent->ID ) ?: '',
     );
 }
