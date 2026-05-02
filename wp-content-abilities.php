@@ -1335,7 +1335,12 @@ function wp_content_abilities_normalize_block_json( $content ) {
     return preg_replace_callback(
         '/<!-- wp:[a-z\/][^\n]* -->/i',
         static function ( $m ) {
-            $c = preg_replace( '/(?<!\\\\)u0026/i', '\\\\u0026', $m[0] );
+            // (a) literal & → & (JSON-required encoding; JS JSON.stringify
+            //     doesn't escape & so it arrives as a bare ampersand).
+            $c = str_replace( '&', '\\u0026', $m[0] );
+            // (b) bare uXXXX → \uXXXX (backslash dropped by AI). Lookbehind
+            //     prevents double-escaping an already-correct &.
+            $c = preg_replace( '/(?<!\\\\)u0026/i', '\\\\u0026', $c );
             $c = preg_replace( '/(?<!\\\\)u003[Cc]/',  '\\\\u003C', $c );
             $c = preg_replace( '/(?<!\\\\)u003[Ee]/',  '\\\\u003E', $c );
             return $c;
