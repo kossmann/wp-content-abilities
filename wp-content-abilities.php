@@ -1313,6 +1313,101 @@ function wp_content_abilities_register() {
             ),
         ),
     ) );
+
+    /**
+     * List Untranslated
+     *
+     * Find posts/pages in source_lang that lack a translation in target_lang.
+     * Closes the "what still needs translating" workflow that otherwise costs
+     * one round-trip per post via get-translation.
+     */
+    wp_register_ability( 'content/list-untranslated', array(
+        'label'       => __( 'List Untranslated', 'wp-content-abilities' ),
+        'description' => __( 'Lists posts or pages in the source language that have no translation in the target language. Requires Polylang.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'source_lang', 'target_lang' ),
+            'properties' => array(
+                'source_lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Source language slug (e.g. "en").',
+                ),
+                'target_lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Target language slug (e.g. "pt"). Posts WITHOUT a translation in this language are returned.',
+                ),
+                'post_type' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'post', 'page' ),
+                    'default'     => 'post',
+                    'description' => 'Post type to search (post or page).',
+                ),
+                'status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'future', 'any' ),
+                    'default'     => 'publish',
+                    'description' => 'Filter source posts by status.',
+                ),
+                'per_page' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'maximum'     => 100,
+                    'default'     => 20,
+                    'description' => 'Maximum source posts to scan per page.',
+                ),
+                'page' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'default'     => 1,
+                    'description' => 'Page number for pagination over the source-language scan.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'untranslated' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'id'       => array( 'type' => 'integer' ),
+                            'title'    => array( 'type' => 'string' ),
+                            'slug'     => array( 'type' => 'string' ),
+                            'status'   => array( 'type' => 'string' ),
+                            'modified' => array( 'type' => 'string' ),
+                            'url'      => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
+                'source_lang'      => array( 'type' => 'string' ),
+                'target_lang'      => array( 'type' => 'string' ),
+                'post_type'        => array( 'type' => 'string' ),
+                'scanned'          => array( 'type' => 'integer', 'description' => 'Number of source posts scanned in this page.' ),
+                'total_source'     => array( 'type' => 'integer', 'description' => 'Total source-language posts matching status filter.' ),
+                'total_pages'      => array( 'type' => 'integer' ),
+                'polylang_active'  => array( 'type' => 'boolean' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_list_untranslated',
+        'permission_callback' => function() {
+            return current_user_can( 'read' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => true,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => true,
+                'destructive' => false,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
 }
 
 // =============================================================================
@@ -2559,5 +2654,72 @@ function wp_content_abilities_get_translation( $input ) {
         'source_id'        => $source_id,
         'source_lang'      => $source_lang,
         'all_translations' => $all_trans ?: (object) array(),
+    );
+}
+
+/**
+ * List Untranslated callback (Polylang)
+ *
+ * Scans posts in source_lang and filters to those with no translation in
+ * target_lang. The scan is paginated against the source-language query so
+ * the full table never has to fit in one request.
+ */
+function wp_content_abilities_list_untranslated( $input ) {
+    if ( ! function_exists( 'pll_get_post' ) || ! function_exists( 'pll_languages_list' ) ) {
+        return array(
+            'untranslated'    => array(),
+            'source_lang'     => $input['source_lang'] ?? '',
+            'target_lang'     => $input['target_lang'] ?? '',
+            'post_type'       => $input['post_type'] ?? 'post',
+            'scanned'         => 0,
+            'total_source'    => 0,
+            'total_pages'     => 0,
+            'polylang_active' => false,
+        );
+    }
+
+    $source_lang = sanitize_key( $input['source_lang'] );
+    $target_lang = sanitize_key( $input['target_lang'] );
+    $post_type   = ( isset( $input['post_type'] ) && 'page' === $input['post_type'] ) ? 'page' : 'post';
+    $requested   = $input['status'] ?? 'publish';
+    $status      = wp_content_abilities_resolve_status( $requested, $post_type );
+
+    $args = array(
+        'post_type'      => $post_type,
+        'post_status'    => $status,
+        'posts_per_page' => $input['per_page'] ?? 20,
+        'paged'          => $input['page'] ?? 1,
+        'orderby'        => 'modified',
+        'order'          => 'DESC',
+        'lang'           => $source_lang,
+    );
+
+    $query        = new WP_Query( $args );
+    $untranslated = array();
+
+    foreach ( $query->posts as $post ) {
+        $trans_id = (int) pll_get_post( $post->ID, $target_lang );
+        if ( $trans_id ) {
+            continue;
+        }
+        $untranslated[] = array(
+            'id'       => $post->ID,
+            'title'    => $post->post_title,
+            'slug'     => $post->post_name,
+            'status'   => $post->post_status,
+            'modified' => $post->post_modified,
+            'url'      => get_permalink( $post->ID ) ?: '',
+        );
+    }
+
+    return array(
+        'untranslated'    => $untranslated,
+        'source_lang'     => $source_lang,
+        'target_lang'     => $target_lang,
+        'post_type'       => $post_type,
+        'scanned'         => count( $query->posts ),
+        'total_source'    => (int) $query->found_posts,
+        'total_pages'     => (int) $query->max_num_pages,
+        'polylang_active' => true,
     );
 }
