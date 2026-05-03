@@ -191,6 +191,7 @@ function wp_content_abilities_register() {
                 'url'            => array( 'type' => 'string' ),
                 'lang'           => array( 'type' => 'string' ),
                 'translations'   => array( 'type' => 'object', 'description' => 'Map of language slug to post ID for all translations. Requires Polylang.' ),
+                'meta'           => array( 'type' => 'object', 'description' => 'Allowlisted custom field values for this post. Empty when no keys are allowlisted.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_get_post',
@@ -307,6 +308,11 @@ function wp_content_abilities_register() {
                     'minimum'     => 1,
                     'description' => 'Post ID of the original post this is a translation of. Requires Polylang. Automatically links this post as a translation and maps categories to their translated equivalents.',
                 ),
+                'meta' => array(
+                    'type'                 => 'object',
+                    'description'          => 'Custom field values keyed by meta key. Only keys registered via the wp_content_abilities_meta_allowlist filter are written; others are silently ignored.',
+                    'additionalProperties' => true,
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -322,6 +328,7 @@ function wp_content_abilities_register() {
                 'format'       => array( 'type' => 'string' ),
                 'lang'         => array( 'type' => 'string' ),
                 'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to post ID for all translations.' ),
+                'meta'         => array( 'type' => 'object', 'description' => 'Allowlisted custom field values after save.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_create_post',
@@ -433,6 +440,11 @@ function wp_content_abilities_register() {
                     'minimum'     => 1,
                     'description' => 'Post ID of the original post this is a translation of. Requires Polylang. Links this post into the translation group of the given post.',
                 ),
+                'meta' => array(
+                    'type'                 => 'object',
+                    'description'          => 'Custom field values keyed by meta key. Only keys registered via the wp_content_abilities_meta_allowlist filter are written; others are silently ignored. Pass an empty value to delete a key.',
+                    'additionalProperties' => true,
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -447,6 +459,7 @@ function wp_content_abilities_register() {
                 'modified'     => array( 'type' => 'string' ),
                 'lang'         => array( 'type' => 'string' ),
                 'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to post ID for all translations.' ),
+                'meta'         => array( 'type' => 'object', 'description' => 'Allowlisted custom field values after save.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_update_post',
@@ -654,6 +667,7 @@ function wp_content_abilities_register() {
                 'url'            => array( 'type' => 'string' ),
                 'lang'           => array( 'type' => 'string' ),
                 'translations'   => array( 'type' => 'object', 'description' => 'Map of language slug to page ID for all translations. Requires Polylang.' ),
+                'meta'           => array( 'type' => 'object', 'description' => 'Allowlisted custom field values for this page. Empty when no keys are allowlisted.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_get_page',
@@ -738,6 +752,11 @@ function wp_content_abilities_register() {
                     'minimum'     => 1,
                     'description' => 'Page ID of the original page this is a translation of. Requires Polylang.',
                 ),
+                'meta' => array(
+                    'type'                 => 'object',
+                    'description'          => 'Custom field values keyed by meta key. Only keys registered via the wp_content_abilities_meta_allowlist filter are written; others are silently ignored.',
+                    'additionalProperties' => true,
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -752,6 +771,7 @@ function wp_content_abilities_register() {
                 'edit_url'     => array( 'type' => 'string' ),
                 'lang'         => array( 'type' => 'string' ),
                 'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to page ID for all translations.' ),
+                'meta'         => array( 'type' => 'object', 'description' => 'Allowlisted custom field values after save.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_create_page',
@@ -840,6 +860,11 @@ function wp_content_abilities_register() {
                     'minimum'     => 1,
                     'description' => 'Page ID of the original page this is a translation of. Requires Polylang.',
                 ),
+                'meta' => array(
+                    'type'                 => 'object',
+                    'description'          => 'Custom field values keyed by meta key. Only keys registered via the wp_content_abilities_meta_allowlist filter are written; others are silently ignored. Pass an empty value to delete a key.',
+                    'additionalProperties' => true,
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -854,6 +879,7 @@ function wp_content_abilities_register() {
                 'modified'     => array( 'type' => 'string' ),
                 'lang'         => array( 'type' => 'string' ),
                 'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to page ID for all translations.' ),
+                'meta'         => array( 'type' => 'object', 'description' => 'Allowlisted custom field values after save.' ),
             ),
         ),
         'execute_callback'    => 'wp_content_abilities_update_page',
@@ -2296,6 +2322,100 @@ function wp_content_abilities_check_status_cap( $status, $post_type = 'post' ) {
 }
 
 /**
+ * Return the allowlist of post meta keys that abilities may read or write.
+ *
+ * The default is empty — meta is opt-in. Sites must register specific keys
+ * via the `wp_content_abilities_meta_allowlist` filter:
+ *
+ *     add_filter( 'wp_content_abilities_meta_allowlist', function( $keys ) {
+ *         $keys[] = 'my_custom_field';
+ *         return $keys;
+ *     } );
+ *
+ * Internal WordPress keys (those starting with "_") and core author/format
+ * meta are always excluded for safety.
+ *
+ * @return string[] Allowlisted meta keys.
+ */
+function wp_content_abilities_get_meta_allowlist() {
+    $keys = apply_filters( 'wp_content_abilities_meta_allowlist', array() );
+    if ( ! is_array( $keys ) ) {
+        return array();
+    }
+    $clean = array();
+    foreach ( $keys as $key ) {
+        if ( ! is_string( $key ) || '' === $key ) {
+            continue;
+        }
+        if ( strpos( $key, '_' ) === 0 ) {
+            continue; // Reject internal/protected keys.
+        }
+        $clean[] = $key;
+    }
+    return array_values( array_unique( $clean ) );
+}
+
+/**
+ * Read allowlisted meta values for a post into a flat associative array.
+ *
+ * @param int $post_id The post ID.
+ * @return array|object Map of key → value, or (object) array() when empty.
+ */
+function wp_content_abilities_read_meta( $post_id ) {
+    $allowlist = wp_content_abilities_get_meta_allowlist();
+    if ( empty( $allowlist ) ) {
+        return (object) array();
+    }
+    $out = array();
+    foreach ( $allowlist as $key ) {
+        $value = get_post_meta( $post_id, $key, true );
+        if ( '' === $value || null === $value ) {
+            continue;
+        }
+        $out[ $key ] = $value;
+    }
+    return empty( $out ) ? (object) array() : $out;
+}
+
+/**
+ * Apply ability-supplied meta writes to a post, restricted to the allowlist.
+ *
+ * Sites can register a per-key sanitizer via the
+ * `wp_content_abilities_meta_sanitize_{$key}` filter. When no sanitizer is
+ * registered, scalars fall through `sanitize_text_field` and arrays are
+ * recursively cleaned.
+ *
+ * @param int   $post_id     The post ID.
+ * @param mixed $meta_input  The raw `meta` input (expected: associative array).
+ * @return void
+ */
+function wp_content_abilities_apply_meta_writes( $post_id, $meta_input ) {
+    if ( ! is_array( $meta_input ) || empty( $meta_input ) ) {
+        return;
+    }
+    $allowlist = wp_content_abilities_get_meta_allowlist();
+    if ( empty( $allowlist ) ) {
+        return;
+    }
+    foreach ( $meta_input as $key => $value ) {
+        if ( ! is_string( $key ) || ! in_array( $key, $allowlist, true ) ) {
+            continue;
+        }
+        $sanitized = apply_filters( "wp_content_abilities_meta_sanitize_{$key}", null, $value, $post_id );
+        if ( null === $sanitized ) {
+            $sanitized = is_scalar( $value )
+                ? sanitize_text_field( (string) $value )
+                : map_deep( $value, 'sanitize_text_field' );
+        }
+        if ( null === $sanitized || '' === $sanitized ) {
+            delete_post_meta( $post_id, $key );
+        } else {
+            update_post_meta( $post_id, $key, $sanitized );
+        }
+    }
+}
+
+/**
  * List Posts callback
  */
 function wp_content_abilities_list_posts( $input ) {
@@ -2391,6 +2511,7 @@ function wp_content_abilities_get_post( $input ) {
         'url'            => get_permalink( $post->ID ),
         'lang'           => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         'translations'   => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
+        'meta'           => wp_content_abilities_read_meta( $post->ID ),
     );
 }
 
@@ -2508,6 +2629,11 @@ function wp_content_abilities_create_post( $input ) {
         }
     }
 
+    // Allowlisted custom fields.
+    if ( isset( $input['meta'] ) ) {
+        wp_content_abilities_apply_meta_writes( $post_id, $input['meta'] );
+    }
+
     $post = get_post( $post_id );
 
     return array(
@@ -2520,6 +2646,7 @@ function wp_content_abilities_create_post( $input ) {
         'format'       => get_post_format( $post_id ) ?: 'standard',
         'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post_id ) : '',
         'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post_id ) : (object) array(),
+        'meta'         => wp_content_abilities_read_meta( $post_id ),
     );
 }
 
@@ -2676,6 +2803,11 @@ function wp_content_abilities_update_post( $input ) {
         }
     }
 
+    // Allowlisted custom fields.
+    if ( isset( $input['meta'] ) ) {
+        wp_content_abilities_apply_meta_writes( $input['id'], $input['meta'] );
+    }
+
     $post = get_post( $input['id'] );
 
     return array(
@@ -2687,6 +2819,7 @@ function wp_content_abilities_update_post( $input ) {
         'modified'     => $post->post_modified,
         'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
+        'meta'         => wp_content_abilities_read_meta( $post->ID ),
     );
 }
 
@@ -2805,6 +2938,7 @@ function wp_content_abilities_get_page( $input ) {
         'url'            => get_permalink( $post->ID ),
         'lang'           => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         'translations'   => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
+        'meta'           => wp_content_abilities_read_meta( $post->ID ),
     );
 }
 
@@ -2879,6 +3013,11 @@ function wp_content_abilities_create_page( $input ) {
         }
     }
 
+    // Allowlisted custom fields.
+    if ( isset( $input['meta'] ) ) {
+        wp_content_abilities_apply_meta_writes( $post_id, $input['meta'] );
+    }
+
     $post = get_post( $post_id );
 
     return array(
@@ -2890,6 +3029,7 @@ function wp_content_abilities_create_page( $input ) {
         'edit_url'     => get_edit_post_link( $post_id, 'raw' ),
         'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post_id ) : '',
         'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post_id ) : (object) array(),
+        'meta'         => wp_content_abilities_read_meta( $post_id ),
     );
 }
 
@@ -3009,6 +3149,11 @@ function wp_content_abilities_update_page( $input ) {
         }
     }
 
+    // Allowlisted custom fields.
+    if ( isset( $input['meta'] ) ) {
+        wp_content_abilities_apply_meta_writes( $input['id'], $input['meta'] );
+    }
+
     $post = get_post( $input['id'] );
 
     return array(
@@ -3020,6 +3165,7 @@ function wp_content_abilities_update_page( $input ) {
         'modified'     => $post->post_modified,
         'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
+        'meta'         => wp_content_abilities_read_meta( $post->ID ),
     );
 }
 
