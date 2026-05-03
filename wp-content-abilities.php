@@ -2231,6 +2231,297 @@ function wp_content_abilities_register() {
             ),
         ),
     ) );
+
+    // =========================================================================
+    // GENERIC CUSTOM POST TYPE ABILITIES
+    // =========================================================================
+
+    /**
+     * List Post Types
+     */
+    wp_register_ability( 'content/list-post-types', array(
+        'label'       => __( 'List Post Types', 'wp-content-abilities' ),
+        'description' => __( 'Returns the post types that the content/*-content abilities can target. By default, any registered post type with show_in_rest=true; sites can extend the list via the wp_content_abilities_cpt_allowlist filter.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'post_types' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'slug'         => array( 'type' => 'string' ),
+                            'label'        => array( 'type' => 'string' ),
+                            'hierarchical' => array( 'type' => 'boolean' ),
+                            'public'       => array( 'type' => 'boolean' ),
+                            'supports'     => array( 'type' => 'array' ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_list_post_types',
+        'permission_callback' => function() {
+            return current_user_can( 'read' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => true,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => true,
+                'destructive' => false,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * List Content (generic CPT)
+     */
+    wp_register_ability( 'content/list-content', array(
+        'label'       => __( 'List Content', 'wp-content-abilities' ),
+        'description' => __( 'Lists entries of a custom post type. Use list-post-types to discover supported post types.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'post_type' ),
+            'properties' => array(
+                'post_type' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 60,
+                    'description' => 'Post type slug (e.g. "product", "event").',
+                ),
+                'status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'future', 'any' ),
+                    'default'     => 'any',
+                ),
+                'per_page' => array( 'type' => 'integer', 'default' => 10, 'minimum' => 1, 'maximum' => 100 ),
+                'page'     => array( 'type' => 'integer', 'default' => 1,  'minimum' => 1 ),
+                'search'   => array( 'type' => 'string',  'maxLength' => 200 ),
+                'orderby'  => array( 'type' => 'string',  'enum' => array( 'date', 'title', 'modified', 'ID', 'menu_order' ), 'default' => 'date' ),
+                'order'    => array( 'type' => 'string',  'enum' => array( 'ASC', 'DESC', 'asc', 'desc' ), 'default' => 'DESC' ),
+                'fields'   => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each item returns only these top-level keys (id is always preserved).',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'items' => array(
+                    'type'  => 'array',
+                    'items' => array( 'type' => 'object' ),
+                ),
+                'total'       => array( 'type' => 'integer' ),
+                'total_pages' => array( 'type' => 'integer' ),
+                'post_type'   => array( 'type' => 'string' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_list_content',
+        'permission_callback' => function() {
+            return current_user_can( 'read' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => true,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => true,
+                'destructive' => false,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * Get Content (generic CPT)
+     */
+    wp_register_ability( 'content/get-content', array(
+        'label'       => __( 'Get Content', 'wp-content-abilities' ),
+        'description' => __( 'Retrieves a single custom post type entry by ID.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'post_type', 'id' ),
+            'properties' => array(
+                'post_type' => array( 'type' => 'string', 'maxLength' => 60 ),
+                'id'        => array( 'type' => 'integer', 'minimum' => 1 ),
+                'fields'    => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, only these top-level keys (plus id) are returned.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type' => 'object',
+        ),
+        'execute_callback'    => 'wp_content_abilities_get_content',
+        'permission_callback' => function() {
+            return current_user_can( 'read' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => true,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => true,
+                'destructive' => false,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * Create Content (generic CPT)
+     */
+    wp_register_ability( 'content/create-content', array(
+        'label'       => __( 'Create Content', 'wp-content-abilities' ),
+        'description' => __( 'Creates a new entry of a custom post type. Capabilities are checked against the post type’s own cap map.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'post_type', 'title' ),
+            'properties' => array(
+                'post_type'        => array( 'type' => 'string', 'maxLength' => 60 ),
+                'title'            => array( 'type' => 'string', 'maxLength' => 500 ),
+                'content'          => array( 'type' => 'string', 'maxLength' => 2000000 ),
+                'excerpt'          => array( 'type' => 'string', 'maxLength' => 1000 ),
+                'status'           => array( 'type' => 'string', 'enum' => array( 'publish', 'draft', 'pending', 'private', 'future' ), 'default' => 'draft' ),
+                'slug'             => array( 'type' => 'string', 'maxLength' => 200 ),
+                'date'             => array( 'type' => 'string', 'maxLength' => 30, 'pattern' => '^\\d{4}-\\d{2}-\\d{2}([T ]\\d{2}:\\d{2}(:\\d{2})?(Z|[+-]\\d{2}:?\\d{2})?)?$' ),
+                'comment_status'   => array( 'type' => 'string', 'enum' => array( 'open', 'closed' ), 'default' => 'closed' ),
+                'ping_status'      => array( 'type' => 'string', 'enum' => array( 'open', 'closed' ), 'default' => 'closed' ),
+                'featured_image_id'=> array( 'type' => 'integer', 'minimum' => 1 ),
+                'parent'           => array( 'type' => 'integer', 'minimum' => 0, 'description' => 'Parent ID, only honoured for hierarchical post types.' ),
+                'menu_order'       => array( 'type' => 'integer' ),
+                'lang'             => array( 'type' => 'string', 'maxLength' => 10, 'description' => 'Polylang language slug (only when the post type is translated).' ),
+                'translation_of'   => array( 'type' => 'integer', 'minimum' => 1 ),
+                'meta'             => array(
+                    'type'                 => 'object',
+                    'description'          => 'Custom field values keyed by meta key. Restricted to keys registered via wp_content_abilities_meta_allowlist.',
+                    'additionalProperties' => true,
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array( 'type' => 'object' ),
+        'execute_callback'    => 'wp_content_abilities_create_content',
+        'permission_callback' => function() {
+            return is_user_logged_in();
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => false,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Update Content (generic CPT)
+     */
+    wp_register_ability( 'content/update-content', array(
+        'label'       => __( 'Update Content', 'wp-content-abilities' ),
+        'description' => __( 'Updates an existing custom post type entry. Only provided fields are changed.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'post_type', 'id' ),
+            'properties' => array(
+                'post_type'        => array( 'type' => 'string', 'maxLength' => 60 ),
+                'id'               => array( 'type' => 'integer', 'minimum' => 1 ),
+                'title'            => array( 'type' => 'string', 'maxLength' => 500 ),
+                'content'          => array( 'type' => 'string', 'maxLength' => 2000000 ),
+                'excerpt'          => array( 'type' => 'string', 'maxLength' => 1000 ),
+                'status'           => array( 'type' => 'string', 'enum' => array( 'publish', 'draft', 'pending', 'private', 'future' ) ),
+                'slug'             => array( 'type' => 'string', 'maxLength' => 200 ),
+                'date'             => array( 'type' => 'string', 'maxLength' => 30, 'pattern' => '^\\d{4}-\\d{2}-\\d{2}([T ]\\d{2}:\\d{2}(:\\d{2})?(Z|[+-]\\d{2}:?\\d{2})?)?$' ),
+                'comment_status'   => array( 'type' => 'string', 'enum' => array( 'open', 'closed' ) ),
+                'ping_status'      => array( 'type' => 'string', 'enum' => array( 'open', 'closed' ) ),
+                'featured_image_id'=> array( 'type' => 'integer', 'minimum' => 0, 'description' => 'Use 0 to remove.' ),
+                'parent'           => array( 'type' => 'integer', 'minimum' => 0 ),
+                'menu_order'       => array( 'type' => 'integer' ),
+                'lang'             => array( 'type' => 'string', 'maxLength' => 10 ),
+                'translation_of'   => array( 'type' => 'integer', 'minimum' => 1 ),
+                'meta'             => array(
+                    'type'                 => 'object',
+                    'description'          => 'Custom field values keyed by meta key. Restricted to keys registered via wp_content_abilities_meta_allowlist. Pass an empty value to delete a key.',
+                    'additionalProperties' => true,
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array( 'type' => 'object' ),
+        'execute_callback'    => 'wp_content_abilities_update_content',
+        'permission_callback' => function() {
+            return is_user_logged_in();
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Delete Content (generic CPT)
+     */
+    wp_register_ability( 'content/delete-content', array(
+        'label'       => __( 'Delete Content', 'wp-content-abilities' ),
+        'description' => __( 'Deletes a custom post type entry. Honours the trash workflow unless force=true.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'post_type', 'id' ),
+            'properties' => array(
+                'post_type' => array( 'type' => 'string', 'maxLength' => 60 ),
+                'id'        => array( 'type' => 'integer', 'minimum' => 1 ),
+                'force'     => array( 'type' => 'boolean', 'default' => false ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'      => array( 'type' => 'integer' ),
+                'deleted' => array( 'type' => 'boolean' ),
+                'trashed' => array( 'type' => 'boolean' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_delete_content',
+        'permission_callback' => function() {
+            return is_user_logged_in();
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
 }
 
 // =============================================================================
@@ -4277,4 +4568,359 @@ function wp_content_abilities_bulk_delete_posts( $input ) {
  */
 function wp_content_abilities_bulk_delete_pages( $input ) {
     return wp_content_abilities_bulk_delete( $input, 'page' );
+}
+
+/**
+ * Resolve a post-type slug to an allowed post type object, or return WP_Error.
+ *
+ * Allowed = registered AND (show_in_rest OR present in the
+ * `wp_content_abilities_cpt_allowlist` filter). The reserved internal types
+ * 'revision', 'nav_menu_item', 'wp_block', 'oembed_cache', 'user_request' are
+ * always rejected to prevent abilities from poking at internals.
+ *
+ * @param string $post_type Slug to resolve.
+ * @return WP_Post_Type|WP_Error Resolved object, or error.
+ */
+function wp_content_abilities_resolve_post_type( $post_type ) {
+    $post_type = is_string( $post_type ) ? sanitize_key( $post_type ) : '';
+    if ( '' === $post_type ) {
+        return new WP_Error( 'invalid_post_type', 'Missing post_type.', array( 'status' => 400 ) );
+    }
+    $reserved = array( 'revision', 'nav_menu_item', 'wp_block', 'oembed_cache', 'user_request' );
+    if ( in_array( $post_type, $reserved, true ) ) {
+        return new WP_Error( 'forbidden_post_type', 'This post type is reserved for internal use.', array( 'status' => 403 ) );
+    }
+    $obj = get_post_type_object( $post_type );
+    if ( ! $obj ) {
+        return new WP_Error( 'invalid_post_type', 'Unknown post type.', array( 'status' => 404 ) );
+    }
+    $allowlist = apply_filters( 'wp_content_abilities_cpt_allowlist', array() );
+    $allowlist = is_array( $allowlist ) ? array_map( 'sanitize_key', $allowlist ) : array();
+    if ( empty( $obj->show_in_rest ) && ! in_array( $post_type, $allowlist, true ) ) {
+        return new WP_Error( 'forbidden_post_type', 'This post type is not exposed via abilities. Set show_in_rest=true on the type, or add it to the wp_content_abilities_cpt_allowlist filter.', array( 'status' => 403 ) );
+    }
+    return $obj;
+}
+
+/**
+ * Format a post for generic CPT output.
+ */
+function wp_content_abilities_format_content( $post, $post_type_obj, $fields = null ) {
+    $thumbnail_id = get_post_thumbnail_id( $post->ID );
+    $row = array(
+        'id'             => (int) $post->ID,
+        'post_type'      => $post->post_type,
+        'title'          => $post->post_title,
+        'slug'           => $post->post_name,
+        'content'        => wp_content_abilities_decode_block_attrs( $post->post_content ),
+        'excerpt'        => $post->post_excerpt,
+        'status'         => $post->post_status,
+        'date'           => $post->post_date,
+        'modified'       => $post->post_modified,
+        'author'         => (int) $post->post_author,
+        'parent'         => (int) $post->post_parent,
+        'menu_order'     => (int) $post->menu_order,
+        'featured_image' => $thumbnail_id ? wp_get_attachment_url( $thumbnail_id ) : '',
+        'url'            => get_permalink( $post->ID ) ?: '',
+        'lang'           => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
+        'translations'   => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
+        'meta'           => wp_content_abilities_read_meta( $post->ID ),
+    );
+    if ( ! $post_type_obj->hierarchical ) {
+        unset( $row['parent'], $row['menu_order'] );
+    }
+    return wp_content_abilities_filter_fields( $row, $fields );
+}
+
+/**
+ * List Post Types callback
+ */
+function wp_content_abilities_list_post_types( $input ) {
+    $types     = get_post_types( array(), 'objects' );
+    $allowlist = apply_filters( 'wp_content_abilities_cpt_allowlist', array() );
+    $allowlist = is_array( $allowlist ) ? array_map( 'sanitize_key', $allowlist ) : array();
+    $reserved  = array( 'revision', 'nav_menu_item', 'wp_block', 'oembed_cache', 'user_request' );
+    $out = array();
+    foreach ( $types as $slug => $obj ) {
+        if ( in_array( $slug, $reserved, true ) ) {
+            continue;
+        }
+        if ( empty( $obj->show_in_rest ) && ! in_array( $slug, $allowlist, true ) ) {
+            continue;
+        }
+        $out[] = array(
+            'slug'         => $slug,
+            'label'        => isset( $obj->labels->singular_name ) ? $obj->labels->singular_name : $slug,
+            'hierarchical' => (bool) $obj->hierarchical,
+            'public'       => (bool) $obj->public,
+            'supports'     => array_keys( get_all_post_type_supports( $slug ) ),
+        );
+    }
+    return array( 'post_types' => $out );
+}
+
+/**
+ * List Content callback
+ */
+function wp_content_abilities_list_content( $input ) {
+    $obj = wp_content_abilities_resolve_post_type( $input['post_type'] ?? '' );
+    if ( is_wp_error( $obj ) ) {
+        return $obj;
+    }
+    $cap = isset( $obj->cap->edit_posts ) ? $obj->cap->edit_posts : 'edit_posts';
+    if ( ! current_user_can( 'read' ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to read content.', array( 'status' => 403 ) );
+    }
+
+    $requested = $input['status'] ?? 'any';
+    if ( 'any' === $requested && ! current_user_can( $cap ) ) {
+        $requested = 'publish';
+    }
+
+    $args = array(
+        'post_type'      => $obj->name,
+        'post_status'    => $requested,
+        'posts_per_page' => $input['per_page'] ?? 10,
+        'paged'          => $input['page'] ?? 1,
+        'orderby'        => $input['orderby'] ?? 'date',
+        'order'          => strtoupper( $input['order'] ?? 'DESC' ),
+    );
+    if ( ! empty( $input['search'] ) ) {
+        $args['s'] = $input['search'];
+    }
+
+    $query  = new WP_Query( $args );
+    $items  = array();
+    $fields = $input['fields'] ?? null;
+    foreach ( $query->posts as $post ) {
+        if ( ! current_user_can( 'read_post', $post->ID ) ) {
+            continue;
+        }
+        $items[] = wp_content_abilities_format_content( $post, $obj, $fields );
+    }
+
+    return array(
+        'items'       => $items,
+        'total'       => (int) $query->found_posts,
+        'total_pages' => (int) $query->max_num_pages,
+        'post_type'   => $obj->name,
+    );
+}
+
+/**
+ * Get Content callback
+ */
+function wp_content_abilities_get_content( $input ) {
+    $obj = wp_content_abilities_resolve_post_type( $input['post_type'] ?? '' );
+    if ( is_wp_error( $obj ) ) {
+        return $obj;
+    }
+    $post = get_post( (int) $input['id'] );
+    if ( ! $post || $post->post_type !== $obj->name || ! current_user_can( 'read_post', $post->ID ) ) {
+        return new WP_Error( 'not_found', 'Entry not found.', array( 'status' => 404 ) );
+    }
+    return wp_content_abilities_format_content( $post, $obj, $input['fields'] ?? null );
+}
+
+/**
+ * Apply shared CPT write inputs (featured image, polylang, meta).
+ */
+function wp_content_abilities_apply_content_extras( $post_id, $obj, $input ) {
+    if ( isset( $input['featured_image_id'] ) && post_type_supports( $obj->name, 'thumbnail' ) ) {
+        if ( 0 === (int) $input['featured_image_id'] ) {
+            delete_post_thumbnail( $post_id );
+        } else {
+            $attachment = get_post( $input['featured_image_id'] );
+            $others_cap = isset( $obj->cap->edit_others_posts ) ? $obj->cap->edit_others_posts : 'edit_others_posts';
+            if ( $attachment && 'attachment' === $attachment->post_type
+                && wp_attachment_is_image( $attachment->ID )
+                && ( (int) $attachment->post_author === get_current_user_id() || current_user_can( $others_cap ) )
+            ) {
+                set_post_thumbnail( $post_id, $attachment->ID );
+            }
+        }
+    }
+
+    if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_post_language' ) && function_exists( 'pll_is_translated_post_type' ) && pll_is_translated_post_type( $obj->name ) ) {
+        $lang = sanitize_key( $input['lang'] );
+        pll_set_post_language( $post_id, $lang );
+        if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_post_translations' ) ) {
+            $original_id  = (int) $input['translation_of'];
+            $translations = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $original_id ) : array();
+            $translations[ $lang ] = $post_id;
+            pll_save_post_translations( $translations );
+        }
+    }
+
+    if ( isset( $input['meta'] ) ) {
+        wp_content_abilities_apply_meta_writes( $post_id, $input['meta'] );
+    }
+}
+
+/**
+ * Create Content callback
+ */
+function wp_content_abilities_create_content( $input ) {
+    $obj = wp_content_abilities_resolve_post_type( $input['post_type'] ?? '' );
+    if ( is_wp_error( $obj ) ) {
+        return $obj;
+    }
+    $create_cap = isset( $obj->cap->create_posts ) ? $obj->cap->create_posts : ( isset( $obj->cap->edit_posts ) ? $obj->cap->edit_posts : 'edit_posts' );
+    if ( ! current_user_can( $create_cap ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to create content of this type.', array( 'status' => 403 ) );
+    }
+
+    $status = $input['status'] ?? 'draft';
+    $publish_cap = isset( $obj->cap->publish_posts ) ? $obj->cap->publish_posts : 'publish_posts';
+    if ( in_array( $status, array( 'publish', 'future', 'private' ), true ) && ! current_user_can( $publish_cap ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to publish this type.', array( 'status' => 403 ) );
+    }
+
+    $post_data = array(
+        'post_type'      => $obj->name,
+        'post_title'     => $input['title'],
+        'post_content'   => wp_content_abilities_normalize_block_json( $input['content'] ?? '' ),
+        'post_excerpt'   => $input['excerpt'] ?? '',
+        'post_status'    => $status,
+        'post_name'      => $input['slug'] ?? '',
+        'comment_status' => $input['comment_status'] ?? 'closed',
+        'ping_status'    => $input['ping_status'] ?? 'closed',
+    );
+    if ( ! empty( $input['date'] ) ) {
+        $post_data['post_date'] = $input['date'];
+    }
+    if ( $obj->hierarchical ) {
+        if ( isset( $input['parent'] ) ) {
+            $parent_id = (int) $input['parent'];
+            if ( $parent_id > 0 ) {
+                $parent_post = get_post( $parent_id );
+                if ( ! $parent_post || $parent_post->post_type !== $obj->name ) {
+                    return new WP_Error( 'invalid_parent', 'Parent must exist and be of the same post type.', array( 'status' => 400 ) );
+                }
+            }
+            $post_data['post_parent'] = max( 0, $parent_id );
+        }
+        if ( isset( $input['menu_order'] ) ) {
+            $post_data['menu_order'] = (int) $input['menu_order'];
+        }
+    }
+
+    $post_id = wp_insert_post( $post_data, true );
+    if ( is_wp_error( $post_id ) ) {
+        return $post_id;
+    }
+
+    wp_content_abilities_apply_content_extras( $post_id, $obj, $input );
+
+    $post = get_post( $post_id );
+    return wp_content_abilities_format_content( $post, $obj );
+}
+
+/**
+ * Update Content callback
+ */
+function wp_content_abilities_update_content( $input ) {
+    $obj = wp_content_abilities_resolve_post_type( $input['post_type'] ?? '' );
+    if ( is_wp_error( $obj ) ) {
+        return $obj;
+    }
+    $post = get_post( (int) $input['id'] );
+    if ( ! $post || $post->post_type !== $obj->name ) {
+        return new WP_Error( 'not_found', 'Entry not found.', array( 'status' => 404 ) );
+    }
+    if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to edit this entry.', array( 'status' => 403 ) );
+    }
+
+    $publish_cap = isset( $obj->cap->publish_posts ) ? $obj->cap->publish_posts : 'publish_posts';
+    if ( isset( $input['status'] ) && in_array( $input['status'], array( 'publish', 'future', 'private' ), true ) && ! current_user_can( $publish_cap ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to publish this type.', array( 'status' => 403 ) );
+    }
+
+    $post_data = array( 'ID' => $post->ID );
+    if ( isset( $input['title'] ) ) {
+        $post_data['post_title'] = $input['title'];
+    }
+    if ( isset( $input['content'] ) ) {
+        $post_data['post_content'] = wp_content_abilities_normalize_block_json( $input['content'] );
+    }
+    if ( isset( $input['excerpt'] ) ) {
+        $post_data['post_excerpt'] = $input['excerpt'];
+    }
+    if ( isset( $input['status'] ) ) {
+        $post_data['post_status'] = $input['status'];
+    }
+    if ( isset( $input['slug'] ) ) {
+        $post_data['post_name'] = $input['slug'];
+    }
+    if ( isset( $input['date'] ) ) {
+        $post_data['post_date'] = $input['date'];
+    }
+    if ( isset( $input['comment_status'] ) ) {
+        $post_data['comment_status'] = $input['comment_status'];
+    }
+    if ( isset( $input['ping_status'] ) ) {
+        $post_data['ping_status'] = $input['ping_status'];
+    }
+    if ( $obj->hierarchical ) {
+        if ( isset( $input['parent'] ) ) {
+            $parent_id = (int) $input['parent'];
+            if ( $parent_id === (int) $post->ID ) {
+                return new WP_Error( 'invalid_parent', 'An entry cannot be its own parent.', array( 'status' => 400 ) );
+            }
+            if ( $parent_id > 0 ) {
+                $parent_post = get_post( $parent_id );
+                if ( ! $parent_post || $parent_post->post_type !== $obj->name ) {
+                    return new WP_Error( 'invalid_parent', 'Parent must exist and be of the same post type.', array( 'status' => 400 ) );
+                }
+                $ancestors = get_post_ancestors( $parent_id );
+                if ( in_array( (int) $post->ID, array_map( 'intval', $ancestors ), true ) ) {
+                    return new WP_Error( 'invalid_parent', 'Setting this parent would create a hierarchy cycle.', array( 'status' => 400 ) );
+                }
+            }
+            $post_data['post_parent'] = max( 0, $parent_id );
+        }
+        if ( isset( $input['menu_order'] ) ) {
+            $post_data['menu_order'] = (int) $input['menu_order'];
+        }
+    }
+
+    if ( count( $post_data ) > 1 ) {
+        $result = wp_update_post( $post_data, true );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+    }
+
+    wp_content_abilities_apply_content_extras( $post->ID, $obj, $input );
+
+    return wp_content_abilities_format_content( get_post( $post->ID ), $obj );
+}
+
+/**
+ * Delete Content callback
+ */
+function wp_content_abilities_delete_content( $input ) {
+    $obj = wp_content_abilities_resolve_post_type( $input['post_type'] ?? '' );
+    if ( is_wp_error( $obj ) ) {
+        return $obj;
+    }
+    $post = get_post( (int) $input['id'] );
+    if ( ! $post || $post->post_type !== $obj->name ) {
+        return new WP_Error( 'not_found', 'Entry not found.', array( 'status' => 404 ) );
+    }
+    if ( ! current_user_can( 'delete_post', $post->ID ) ) {
+        return new WP_Error( 'forbidden', 'You do not have permission to delete this entry.', array( 'status' => 403 ) );
+    }
+    $force   = ! empty( $input['force'] );
+    $deleted = wp_delete_post( $post->ID, $force );
+    if ( ! $deleted ) {
+        return new WP_Error( 'delete_failed', 'Failed to delete entry.', array( 'status' => 500 ) );
+    }
+    $trashed = ! $force && EMPTY_TRASH_DAYS && 'trash' === get_post_status( $post->ID );
+    return array(
+        'id'      => (int) $post->ID,
+        'deleted' => true,
+        'trashed' => (bool) $trashed,
+    );
 }
