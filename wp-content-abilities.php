@@ -108,6 +108,12 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Filter by language slug (e.g. "en", "pt"). Requires Polylang.',
                 ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each item returns only these top-level keys (id is always preserved). Reduces payload size.',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -168,6 +174,12 @@ function wp_content_abilities_register() {
                     'type'        => 'integer',
                     'minimum'     => 1,
                     'description' => 'The post ID.',
+                ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, only these top-level keys (plus id) are returned.',
                 ),
             ),
             'additionalProperties' => false,
@@ -587,6 +599,12 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Filter by language slug (e.g. "en", "pt"). Requires Polylang.',
                 ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each item returns only these top-level keys (id is always preserved). Reduces payload size.',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -645,6 +663,12 @@ function wp_content_abilities_register() {
                     'type'        => 'integer',
                     'minimum'     => 1,
                     'description' => 'The page ID.',
+                ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, only these top-level keys (plus id) are returned.',
                 ),
             ),
             'additionalProperties' => false,
@@ -970,6 +994,12 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Filter categories by language slug (e.g. "en", "pt"). Requires Polylang.',
                 ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each item returns only these top-level keys (id is always preserved).',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -1032,6 +1062,12 @@ function wp_content_abilities_register() {
                     'type'        => 'string',
                     'maxLength'   => 10,
                     'description' => 'Filter tags by language slug (e.g. "en", "pt"). Requires Polylang.',
+                ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each item returns only these top-level keys (id is always preserved).',
                 ),
             ),
             'additionalProperties' => false,
@@ -1200,6 +1236,12 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Filter by language slug (e.g. "en", "pt"). Only applies when Polylang media translation is enabled.',
                 ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each item returns only these top-level keys (id is always preserved).',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -1309,6 +1351,12 @@ function wp_content_abilities_register() {
                     'maxLength'   => 10,
                     'description' => 'Target language slug (e.g. "pt", "en").',
                 ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, only these top-level keys (plus id) are returned.',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -1390,6 +1438,12 @@ function wp_content_abilities_register() {
                     'default'     => 1,
                     'description' => 'Page number for pagination over the source-language scan.',
                 ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each untranslated item returns only these top-level keys (id is always preserved).',
+                ),
             ),
             'additionalProperties' => false,
         ),
@@ -1464,6 +1518,12 @@ function wp_content_abilities_register() {
                     'maximum'     => 100,
                     'default'     => 20,
                     'description' => 'Maximum revisions to return.',
+                ),
+                'fields' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 60 ),
+                    'maxItems'    => 30,
+                    'description' => 'Sparse fieldset: when set, each revision returns only these top-level keys (id is always preserved).',
                 ),
             ),
             'additionalProperties' => false,
@@ -2356,6 +2416,36 @@ function wp_content_abilities_get_meta_allowlist() {
 }
 
 /**
+ * Filter a row to a sparse fieldset.
+ *
+ * If $fields is empty/non-array, the row is returned unchanged. Otherwise the
+ * row is reduced to the union of $fields and $always (which protects keys like
+ * `id` so callers never lose the canonical handle for follow-up calls).
+ *
+ * @param array|object $row    The output row.
+ * @param mixed        $fields The requested fields (array of strings) or null.
+ * @param string[]     $always Keys that must always be returned.
+ * @return array              Filtered row.
+ */
+function wp_content_abilities_filter_fields( $row, $fields, $always = array( 'id' ) ) {
+    $row = (array) $row;
+    if ( empty( $fields ) || ! is_array( $fields ) ) {
+        return $row;
+    }
+    $clean = array();
+    foreach ( $fields as $f ) {
+        if ( is_string( $f ) && '' !== $f ) {
+            $clean[] = $f;
+        }
+    }
+    if ( empty( $clean ) ) {
+        return $row;
+    }
+    $allowed = array_unique( array_merge( $always, $clean ) );
+    return array_intersect_key( $row, array_flip( $allowed ) );
+}
+
+/**
  * Read allowlisted meta values for a post into a flat associative array.
  *
  * @param int $post_id The post ID.
@@ -2455,8 +2545,9 @@ function wp_content_abilities_list_posts( $input ) {
     $query = new WP_Query( $args );
     $posts = array();
 
+    $fields = $input['fields'] ?? null;
     foreach ( $query->posts as $post ) {
-        $posts[] = array(
+        $row = array(
             'id'         => $post->ID,
             'title'      => $post->post_title,
             'slug'       => $post->post_name,
@@ -2469,6 +2560,7 @@ function wp_content_abilities_list_posts( $input ) {
             'tags'       => wp_get_post_tags( $post->ID, array( 'fields' => 'slugs' ) ),
             'lang'       => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         );
+        $posts[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array(
@@ -2494,7 +2586,7 @@ function wp_content_abilities_get_post( $input ) {
     $author = get_userdata( $post->post_author );
     $thumbnail_id = get_post_thumbnail_id( $post->ID );
 
-    return array(
+    $row = array(
         'id'             => $post->ID,
         'title'          => $post->post_title,
         'slug'           => $post->post_name,
@@ -2513,6 +2605,7 @@ function wp_content_abilities_get_post( $input ) {
         'translations'   => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
         'meta'           => wp_content_abilities_read_meta( $post->ID ),
     );
+    return wp_content_abilities_filter_fields( $row, $input['fields'] ?? null );
 }
 
 /**
@@ -2886,8 +2979,9 @@ function wp_content_abilities_list_pages( $input ) {
     $query = new WP_Query( $args );
     $pages = array();
 
+    $fields = $input['fields'] ?? null;
     foreach ( $query->posts as $post ) {
-        $pages[] = array(
+        $row = array(
             'id'         => $post->ID,
             'title'      => $post->post_title,
             'slug'       => $post->post_name,
@@ -2898,6 +2992,7 @@ function wp_content_abilities_list_pages( $input ) {
             'menu_order' => (int) $post->menu_order,
             'lang'       => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         );
+        $pages[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array(
@@ -2922,7 +3017,7 @@ function wp_content_abilities_get_page( $input ) {
 
     $thumbnail_id = get_post_thumbnail_id( $post->ID );
 
-    return array(
+    $row = array(
         'id'             => $post->ID,
         'title'          => $post->post_title,
         'slug'           => $post->post_name,
@@ -2940,6 +3035,7 @@ function wp_content_abilities_get_page( $input ) {
         'translations'   => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
         'meta'           => wp_content_abilities_read_meta( $post->ID ),
     );
+    return wp_content_abilities_filter_fields( $row, $input['fields'] ?? null );
 }
 
 /**
@@ -3215,9 +3311,10 @@ function wp_content_abilities_list_categories( $input ) {
 
     $categories = get_categories( $args );
     $result = array();
+    $fields = $input['fields'] ?? null;
 
     foreach ( $categories as $cat ) {
-        $result[] = array(
+        $row = array(
             'id'          => $cat->term_id,
             'name'        => $cat->name,
             'slug'        => $cat->slug,
@@ -3226,6 +3323,7 @@ function wp_content_abilities_list_categories( $input ) {
             'count'       => $cat->count,
             'lang'        => function_exists( 'pll_get_term_language' ) ? (string) pll_get_term_language( $cat->term_id ) : '',
         );
+        $result[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array( 'categories' => $result );
@@ -3250,9 +3348,10 @@ function wp_content_abilities_list_tags( $input ) {
 
     $tags = get_tags( $args );
     $result = array();
+    $fields = $input['fields'] ?? null;
 
     foreach ( $tags as $tag ) {
-        $result[] = array(
+        $row = array(
             'id'          => $tag->term_id,
             'name'        => $tag->name,
             'slug'        => $tag->slug,
@@ -3260,6 +3359,7 @@ function wp_content_abilities_list_tags( $input ) {
             'count'       => $tag->count,
             'lang'        => function_exists( 'pll_get_term_language' ) ? (string) pll_get_term_language( $tag->term_id ) : '',
         );
+        $result[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array( 'tags' => $result );
@@ -3437,11 +3537,12 @@ function wp_content_abilities_list_media( $input ) {
 
     $query = new WP_Query( $args );
     $media = array();
+    $fields = $input['fields'] ?? null;
 
     foreach ( $query->posts as $attachment ) {
         $lang         = ( $media_translation && function_exists( 'pll_get_post_language' ) ) ? (string) pll_get_post_language( $attachment->ID ) : '';
         $translations = ( $media_translation && function_exists( 'pll_get_post_translations' ) ) ? pll_get_post_translations( $attachment->ID ) : (object) array();
-        $media[] = array(
+        $row = array(
             'id'           => $attachment->ID,
             'title'        => $attachment->post_title,
             'filename'     => basename( get_attached_file( $attachment->ID ) ),
@@ -3451,6 +3552,7 @@ function wp_content_abilities_list_media( $input ) {
             'lang'         => $lang,
             'translations' => $translations,
         );
+        $media[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array(
@@ -3516,9 +3618,10 @@ function wp_content_abilities_get_translation( $input ) {
     $source_lang  = function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $source_id ) : '';
     $all_trans    = function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $source_id ) : array();
     $trans_id     = (int) pll_get_post( $source_id, $target_lang );
+    $fields       = $input['fields'] ?? null;
 
     if ( ! $trans_id ) {
-        return array(
+        $row = array(
             'found'            => false,
             'id'               => 0,
             'url'              => '',
@@ -3527,9 +3630,10 @@ function wp_content_abilities_get_translation( $input ) {
             'source_lang'      => $source_lang,
             'all_translations' => $all_trans ?: (object) array(),
         );
+        return wp_content_abilities_filter_fields( $row, $fields );
     }
 
-    return array(
+    $row = array(
         'found'            => true,
         'id'               => $trans_id,
         'url'              => get_permalink( $trans_id ) ?: '',
@@ -3538,6 +3642,7 @@ function wp_content_abilities_get_translation( $input ) {
         'source_lang'      => $source_lang,
         'all_translations' => $all_trans ?: (object) array(),
     );
+    return wp_content_abilities_filter_fields( $row, $fields );
 }
 
 /**
@@ -3579,13 +3684,14 @@ function wp_content_abilities_list_untranslated( $input ) {
 
     $query        = new WP_Query( $args );
     $untranslated = array();
+    $fields       = $input['fields'] ?? null;
 
     foreach ( $query->posts as $post ) {
         $trans_id = (int) pll_get_post( $post->ID, $target_lang );
         if ( $trans_id ) {
             continue;
         }
-        $untranslated[] = array(
+        $row = array(
             'id'       => $post->ID,
             'title'    => $post->post_title,
             'slug'     => $post->post_name,
@@ -3593,6 +3699,7 @@ function wp_content_abilities_list_untranslated( $input ) {
             'modified' => $post->post_modified,
             'url'      => get_permalink( $post->ID ) ?: '',
         );
+        $untranslated[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array(
@@ -3631,9 +3738,10 @@ function wp_content_abilities_list_revisions( $input ) {
     );
 
     $out = array();
+    $fields = $input['fields'] ?? null;
     foreach ( $revisions as $rev ) {
         $author = get_userdata( $rev->post_author );
-        $out[]  = array(
+        $row = array(
             'id'          => (int) $rev->ID,
             'parent_id'   => (int) $rev->post_parent,
             'author'      => (int) $rev->post_author,
@@ -3643,6 +3751,7 @@ function wp_content_abilities_list_revisions( $input ) {
             'title'       => $rev->post_title,
             'is_autosave' => wp_is_post_autosave( $rev ) ? true : false,
         );
+        $out[] = wp_content_abilities_filter_fields( $row, $fields );
     }
 
     return array(
