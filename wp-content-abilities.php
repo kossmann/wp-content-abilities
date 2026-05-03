@@ -1860,6 +1860,291 @@ function wp_content_abilities_register() {
             ),
         ),
     ) );
+
+    // =========================================================================
+    // BULK OPERATIONS
+    // =========================================================================
+
+    /**
+     * Bulk Update Posts
+     */
+    wp_register_ability( 'content/bulk-update-posts', array(
+        'label'       => __( 'Bulk Update Posts', 'wp-content-abilities' ),
+        'description' => __( 'Applies the same field changes to a list of posts. Re-checks edit permission per post and returns per-item success/failure.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'ids' ),
+            'properties' => array(
+                'ids' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'minItems'    => 1,
+                    'maxItems'    => 50,
+                    'description' => 'Post IDs to update (max 50 per call).',
+                ),
+                'status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'future', 'trash' ),
+                    'description' => 'New status to apply to every post.',
+                ),
+                'comment_status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'open', 'closed' ),
+                    'description' => 'Comment status to apply to every post.',
+                ),
+                'ping_status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'open', 'closed' ),
+                    'description' => 'Ping status to apply to every post.',
+                ),
+                'sticky' => array(
+                    'type'        => 'boolean',
+                    'description' => 'Mark all posts sticky (true) or unsticky (false).',
+                ),
+                'add_categories' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 200 ),
+                    'maxItems'    => 50,
+                    'description' => 'Category slugs to add to every post (existing categories are preserved).',
+                ),
+                'add_tags' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'string', 'maxLength' => 200 ),
+                    'maxItems'    => 50,
+                    'description' => 'Tag names/slugs to add to every post (existing tags are preserved).',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'results' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'id'      => array( 'type' => 'integer' ),
+                            'success' => array( 'type' => 'boolean' ),
+                            'error'   => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
+                'success_count' => array( 'type' => 'integer' ),
+                'failure_count' => array( 'type' => 'integer' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_bulk_update_posts',
+        'permission_callback' => function() {
+            return current_user_can( 'edit_posts' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Bulk Update Pages
+     */
+    wp_register_ability( 'content/bulk-update-pages', array(
+        'label'       => __( 'Bulk Update Pages', 'wp-content-abilities' ),
+        'description' => __( 'Applies the same field changes to a list of pages. Re-checks edit permission per page and returns per-item success/failure.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'ids' ),
+            'properties' => array(
+                'ids' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'minItems'    => 1,
+                    'maxItems'    => 50,
+                    'description' => 'Page IDs to update (max 50 per call).',
+                ),
+                'status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'future', 'trash' ),
+                    'description' => 'New status to apply to every page.',
+                ),
+                'comment_status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'open', 'closed' ),
+                    'description' => 'Comment status to apply to every page.',
+                ),
+                'ping_status' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'open', 'closed' ),
+                    'description' => 'Ping status to apply to every page.',
+                ),
+                'parent' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 0,
+                    'description' => 'Parent page ID to apply to every page (0 for top-level).',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'results' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'id'      => array( 'type' => 'integer' ),
+                            'success' => array( 'type' => 'boolean' ),
+                            'error'   => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
+                'success_count' => array( 'type' => 'integer' ),
+                'failure_count' => array( 'type' => 'integer' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_bulk_update_pages',
+        'permission_callback' => function() {
+            return current_user_can( 'edit_pages' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Bulk Delete Posts
+     */
+    wp_register_ability( 'content/bulk-delete-posts', array(
+        'label'       => __( 'Bulk Delete Posts', 'wp-content-abilities' ),
+        'description' => __( 'Deletes a list of posts. Honours the trash workflow unless force=true. Re-checks delete permission per post.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'ids' ),
+            'properties' => array(
+                'ids' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'minItems'    => 1,
+                    'maxItems'    => 50,
+                    'description' => 'Post IDs to delete (max 50 per call).',
+                ),
+                'force' => array(
+                    'type'        => 'boolean',
+                    'description' => 'Bypass trash and permanently delete each post.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'results' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'id'      => array( 'type' => 'integer' ),
+                            'success' => array( 'type' => 'boolean' ),
+                            'trashed' => array( 'type' => 'boolean' ),
+                            'error'   => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
+                'success_count' => array( 'type' => 'integer' ),
+                'failure_count' => array( 'type' => 'integer' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_bulk_delete_posts',
+        'permission_callback' => function() {
+            return current_user_can( 'delete_posts' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * Bulk Delete Pages
+     */
+    wp_register_ability( 'content/bulk-delete-pages', array(
+        'label'       => __( 'Bulk Delete Pages', 'wp-content-abilities' ),
+        'description' => __( 'Deletes a list of pages. Honours the trash workflow unless force=true. Re-checks delete permission per page.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'ids' ),
+            'properties' => array(
+                'ids' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'minItems'    => 1,
+                    'maxItems'    => 50,
+                    'description' => 'Page IDs to delete (max 50 per call).',
+                ),
+                'force' => array(
+                    'type'        => 'boolean',
+                    'description' => 'Bypass trash and permanently delete each page.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'results' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'id'      => array( 'type' => 'integer' ),
+                            'success' => array( 'type' => 'boolean' ),
+                            'trashed' => array( 'type' => 'boolean' ),
+                            'error'   => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
+                'success_count' => array( 'type' => 'integer' ),
+                'failure_count' => array( 'type' => 'integer' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_bulk_delete_pages',
+        'permission_callback' => function() {
+            return current_user_can( 'delete_pages' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
 }
 
 // =============================================================================
@@ -3532,4 +3817,209 @@ function wp_content_abilities_delete_tag( $input ) {
         'deleted' => true,
         'name'    => $name,
     );
+}
+
+/**
+ * Internal helper: bulk-update implementation shared by post and page abilities.
+ *
+ * @param array  $input     Sanitized ability input.
+ * @param string $post_type 'post' or 'page'.
+ * @return array            { results, success_count, failure_count }.
+ */
+function wp_content_abilities_bulk_update( $input, $post_type ) {
+    $ids     = array_values( array_unique( array_map( 'intval', (array) $input['ids'] ) ) );
+    $results = array();
+    $success = 0;
+    $failure = 0;
+
+    // Resolve any add_categories slugs to IDs once, before the loop.
+    $category_ids_to_add = array();
+    if ( 'post' === $post_type && ! empty( $input['add_categories'] ) ) {
+        foreach ( (array) $input['add_categories'] as $slug ) {
+            $cat = get_category_by_slug( sanitize_title( $slug ) );
+            if ( $cat ) {
+                $category_ids_to_add[] = (int) $cat->term_id;
+            }
+        }
+    }
+
+    foreach ( $ids as $id ) {
+        if ( $id <= 0 ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'error' => 'Invalid ID.' );
+            $failure++;
+            continue;
+        }
+
+        $post = get_post( $id );
+        if ( ! $post || $post->post_type !== $post_type ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'error' => 'Not found.' );
+            $failure++;
+            continue;
+        }
+
+        if ( ! current_user_can( 'edit_post', $id ) ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'error' => 'Forbidden.' );
+            $failure++;
+            continue;
+        }
+
+        if ( isset( $input['status'] ) ) {
+            $cap_check = wp_content_abilities_check_status_cap( $input['status'], $post_type );
+            if ( is_wp_error( $cap_check ) ) {
+                $results[] = array( 'id' => $id, 'success' => false, 'error' => $cap_check->get_error_message() );
+                $failure++;
+                continue;
+            }
+        }
+
+        $post_data = array( 'ID' => $id );
+        if ( isset( $input['status'] ) ) {
+            $post_data['post_status'] = $input['status'];
+        }
+        if ( isset( $input['comment_status'] ) ) {
+            $post_data['comment_status'] = $input['comment_status'];
+        }
+        if ( isset( $input['ping_status'] ) ) {
+            $post_data['ping_status'] = $input['ping_status'];
+        }
+        if ( 'page' === $post_type && isset( $input['parent'] ) ) {
+            $parent_id = (int) $input['parent'];
+            if ( $parent_id > 0 ) {
+                if ( $parent_id === $id ) {
+                    $results[] = array( 'id' => $id, 'success' => false, 'error' => 'A page cannot be its own parent.' );
+                    $failure++;
+                    continue;
+                }
+                $parent_post = get_post( $parent_id );
+                if ( ! $parent_post || 'page' !== $parent_post->post_type ) {
+                    $results[] = array( 'id' => $id, 'success' => false, 'error' => 'Parent page not found.' );
+                    $failure++;
+                    continue;
+                }
+                $ancestors = get_post_ancestors( $parent_id );
+                if ( in_array( $id, array_map( 'intval', $ancestors ), true ) ) {
+                    $results[] = array( 'id' => $id, 'success' => false, 'error' => 'Parent assignment would create a cycle.' );
+                    $failure++;
+                    continue;
+                }
+            }
+            $post_data['post_parent'] = max( 0, $parent_id );
+        }
+
+        if ( count( $post_data ) > 1 ) {
+            $update = wp_update_post( $post_data, true );
+            if ( is_wp_error( $update ) ) {
+                $results[] = array( 'id' => $id, 'success' => false, 'error' => $update->get_error_message() );
+                $failure++;
+                continue;
+            }
+        }
+
+        // Posts only: sticky, add_categories, add_tags.
+        if ( 'post' === $post_type ) {
+            if ( isset( $input['sticky'] ) ) {
+                if ( true === $input['sticky'] ) {
+                    stick_post( $id );
+                } else {
+                    unstick_post( $id );
+                }
+            }
+            if ( ! empty( $category_ids_to_add ) ) {
+                wp_set_post_categories( $id, $category_ids_to_add, true );
+            }
+            if ( ! empty( $input['add_tags'] ) ) {
+                wp_set_post_tags( $id, (array) $input['add_tags'], true );
+            }
+        }
+
+        $results[] = array( 'id' => $id, 'success' => true );
+        $success++;
+    }
+
+    return array(
+        'results'       => $results,
+        'success_count' => $success,
+        'failure_count' => $failure,
+    );
+}
+
+/**
+ * Internal helper: bulk-delete implementation shared by post and page abilities.
+ *
+ * @param array  $input     Sanitized ability input.
+ * @param string $post_type 'post' or 'page'.
+ * @return array            { results, success_count, failure_count }.
+ */
+function wp_content_abilities_bulk_delete( $input, $post_type ) {
+    $ids     = array_values( array_unique( array_map( 'intval', (array) $input['ids'] ) ) );
+    $force   = ! empty( $input['force'] );
+    $results = array();
+    $success = 0;
+    $failure = 0;
+
+    foreach ( $ids as $id ) {
+        if ( $id <= 0 ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'trashed' => false, 'error' => 'Invalid ID.' );
+            $failure++;
+            continue;
+        }
+
+        $post = get_post( $id );
+        if ( ! $post || $post->post_type !== $post_type ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'trashed' => false, 'error' => 'Not found.' );
+            $failure++;
+            continue;
+        }
+
+        if ( ! current_user_can( 'delete_post', $id ) ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'trashed' => false, 'error' => 'Forbidden.' );
+            $failure++;
+            continue;
+        }
+
+        $deleted = wp_delete_post( $id, $force );
+        if ( ! $deleted ) {
+            $results[] = array( 'id' => $id, 'success' => false, 'trashed' => false, 'error' => 'Delete failed.' );
+            $failure++;
+            continue;
+        }
+
+        $trashed = ! $force && EMPTY_TRASH_DAYS && 'trash' === get_post_status( $id );
+        $results[] = array( 'id' => $id, 'success' => true, 'trashed' => (bool) $trashed );
+        $success++;
+    }
+
+    return array(
+        'results'       => $results,
+        'success_count' => $success,
+        'failure_count' => $failure,
+    );
+}
+
+/**
+ * Bulk Update Posts callback
+ */
+function wp_content_abilities_bulk_update_posts( $input ) {
+    return wp_content_abilities_bulk_update( $input, 'post' );
+}
+
+/**
+ * Bulk Update Pages callback
+ */
+function wp_content_abilities_bulk_update_pages( $input ) {
+    return wp_content_abilities_bulk_update( $input, 'page' );
+}
+
+/**
+ * Bulk Delete Posts callback
+ */
+function wp_content_abilities_bulk_delete_posts( $input ) {
+    return wp_content_abilities_bulk_delete( $input, 'post' );
+}
+
+/**
+ * Bulk Delete Pages callback
+ */
+function wp_content_abilities_bulk_delete_pages( $input ) {
+    return wp_content_abilities_bulk_delete( $input, 'page' );
 }
