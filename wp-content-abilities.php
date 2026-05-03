@@ -1532,6 +1532,334 @@ function wp_content_abilities_register() {
             ),
         ),
     ) );
+
+    // =========================================================================
+    // TAXONOMY CRUD ABILITIES
+    // =========================================================================
+
+    /**
+     * Create Category
+     */
+    wp_register_ability( 'content/create-category', array(
+        'label'       => __( 'Create Category', 'wp-content-abilities' ),
+        'description' => __( 'Creates a new category. Optionally sets a parent and Polylang language linkage.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'name' ),
+            'properties' => array(
+                'name' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 200,
+                    'description' => 'Category name.',
+                ),
+                'slug' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 200,
+                    'description' => 'Category slug. Auto-generated from name if omitted.',
+                ),
+                'description' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 5000,
+                    'description' => 'Category description.',
+                ),
+                'parent' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 0,
+                    'description' => 'Parent category ID. Use 0 for top-level.',
+                ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Language slug for the category. Requires Polylang.',
+                ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Existing category ID this category translates. Requires Polylang.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'           => array( 'type' => 'integer' ),
+                'name'         => array( 'type' => 'string' ),
+                'slug'         => array( 'type' => 'string' ),
+                'parent'       => array( 'type' => 'integer' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_create_category',
+        'permission_callback' => function() {
+            return current_user_can( 'manage_categories' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => false,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Update Category
+     */
+    wp_register_ability( 'content/update-category', array(
+        'label'       => __( 'Update Category', 'wp-content-abilities' ),
+        'description' => __( 'Updates an existing category. Only provided fields are changed.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id' ),
+            'properties' => array(
+                'id' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Category ID to update.',
+                ),
+                'name'        => array( 'type' => 'string', 'maxLength' => 200, 'description' => 'New name.' ),
+                'slug'        => array( 'type' => 'string', 'maxLength' => 200, 'description' => 'New slug.' ),
+                'description' => array( 'type' => 'string', 'maxLength' => 5000, 'description' => 'New description.' ),
+                'parent'      => array( 'type' => 'integer', 'minimum' => 0, 'description' => 'New parent category ID. Use 0 for top-level.' ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Change the category language slug. Requires Polylang.',
+                ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Existing category ID this category translates. Requires Polylang.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'           => array( 'type' => 'integer' ),
+                'name'         => array( 'type' => 'string' ),
+                'slug'         => array( 'type' => 'string' ),
+                'parent'       => array( 'type' => 'integer' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_update_category',
+        'permission_callback' => function() {
+            return current_user_can( 'manage_categories' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Delete Category
+     */
+    wp_register_ability( 'content/delete-category', array(
+        'label'       => __( 'Delete Category', 'wp-content-abilities' ),
+        'description' => __( 'Permanently deletes a category. Posts assigned only to this category fall back to the default category.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id' ),
+            'properties' => array(
+                'id' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Category ID to delete.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'      => array( 'type' => 'integer' ),
+                'deleted' => array( 'type' => 'boolean' ),
+                'name'    => array( 'type' => 'string' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_delete_category',
+        'permission_callback' => function() {
+            return current_user_can( 'manage_categories' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
+
+    /**
+     * Create Tag
+     */
+    wp_register_ability( 'content/create-tag', array(
+        'label'       => __( 'Create Tag', 'wp-content-abilities' ),
+        'description' => __( 'Creates a new post tag.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'name' ),
+            'properties' => array(
+                'name'        => array( 'type' => 'string', 'maxLength' => 200, 'description' => 'Tag name.' ),
+                'slug'        => array( 'type' => 'string', 'maxLength' => 200, 'description' => 'Tag slug.' ),
+                'description' => array( 'type' => 'string', 'maxLength' => 5000, 'description' => 'Tag description.' ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Language slug for the tag. Requires Polylang.',
+                ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Existing tag ID this tag translates. Requires Polylang.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'           => array( 'type' => 'integer' ),
+                'name'         => array( 'type' => 'string' ),
+                'slug'         => array( 'type' => 'string' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_create_tag',
+        'permission_callback' => function() {
+            return current_user_can( 'manage_categories' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => false,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Update Tag
+     */
+    wp_register_ability( 'content/update-tag', array(
+        'label'       => __( 'Update Tag', 'wp-content-abilities' ),
+        'description' => __( 'Updates an existing tag. Only provided fields are changed.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id' ),
+            'properties' => array(
+                'id'          => array( 'type' => 'integer', 'minimum' => 1, 'description' => 'Tag ID to update.' ),
+                'name'        => array( 'type' => 'string', 'maxLength' => 200, 'description' => 'New name.' ),
+                'slug'        => array( 'type' => 'string', 'maxLength' => 200, 'description' => 'New slug.' ),
+                'description' => array( 'type' => 'string', 'maxLength' => 5000, 'description' => 'New description.' ),
+                'lang' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 10,
+                    'description' => 'Change the tag language slug. Requires Polylang.',
+                ),
+                'translation_of' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Existing tag ID this tag translates. Requires Polylang.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'           => array( 'type' => 'integer' ),
+                'name'         => array( 'type' => 'string' ),
+                'slug'         => array( 'type' => 'string' ),
+                'lang'         => array( 'type' => 'string' ),
+                'translations' => array( 'type' => 'object' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_update_tag',
+        'permission_callback' => function() {
+            return current_user_can( 'manage_categories' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => false,
+            ),
+        ),
+    ) );
+
+    /**
+     * Delete Tag
+     */
+    wp_register_ability( 'content/delete-tag', array(
+        'label'       => __( 'Delete Tag', 'wp-content-abilities' ),
+        'description' => __( 'Permanently deletes a tag. Posts retain other tags they have.', 'wp-content-abilities' ),
+        'category'    => 'content',
+        'input_schema' => array(
+            'type'       => 'object',
+            'required'   => array( 'id' ),
+            'properties' => array(
+                'id' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'description' => 'Tag ID to delete.',
+                ),
+            ),
+            'additionalProperties' => false,
+        ),
+        'output_schema' => array(
+            'type'       => 'object',
+            'properties' => array(
+                'id'      => array( 'type' => 'integer' ),
+                'deleted' => array( 'type' => 'boolean' ),
+                'name'    => array( 'type' => 'string' ),
+            ),
+        ),
+        'execute_callback'    => 'wp_content_abilities_delete_tag',
+        'permission_callback' => function() {
+            return current_user_can( 'manage_categories' );
+        },
+        'meta' => array(
+            'show_in_rest' => true,
+            'readonly'     => false,
+            'mcp'          => array( 'public' => true, 'type' => 'tool' ),
+            'annotations'  => array(
+                'readonly'    => false,
+                'destructive' => true,
+                'idempotent'  => true,
+            ),
+        ),
+    ) );
 }
 
 // =============================================================================
@@ -2925,5 +3253,283 @@ function wp_content_abilities_restore_revision( $input ) {
         'restored'    => true,
         'modified'    => $restored ? $restored->post_modified : '',
         'url'         => get_permalink( $parent->ID ) ?: '',
+    );
+}
+
+/**
+ * Internal helper: insert a taxonomy term with optional Polylang linkage.
+ *
+ * @param string $taxonomy 'category' or 'post_tag'.
+ * @param array  $input    Sanitized ability input.
+ * @return array|WP_Error  Term row for output, or WP_Error.
+ */
+function wp_content_abilities_insert_term( $taxonomy, $input ) {
+    $name = isset( $input['name'] ) ? wp_strip_all_tags( (string) $input['name'] ) : '';
+    if ( '' === trim( $name ) ) {
+        return new WP_Error( 'invalid_name', 'Term name is required.', array( 'status' => 400 ) );
+    }
+
+    $args = array();
+    if ( ! empty( $input['slug'] ) ) {
+        $args['slug'] = sanitize_title( $input['slug'] );
+    }
+    if ( isset( $input['description'] ) ) {
+        $args['description'] = wp_kses_post( $input['description'] );
+    }
+    if ( 'category' === $taxonomy && isset( $input['parent'] ) ) {
+        $parent_id = (int) $input['parent'];
+        if ( $parent_id > 0 ) {
+            $parent_term = get_term( $parent_id, 'category' );
+            if ( ! $parent_term || is_wp_error( $parent_term ) ) {
+                return new WP_Error( 'invalid_parent', 'Parent category does not exist.', array( 'status' => 400 ) );
+            }
+        }
+        $args['parent'] = max( 0, $parent_id );
+    }
+
+    $result = wp_insert_term( $name, $taxonomy, $args );
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+    $term_id = (int) $result['term_id'];
+
+    // Polylang: assign language and link translation.
+    if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_term_language' ) ) {
+        $lang = sanitize_key( $input['lang'] );
+        pll_set_term_language( $term_id, $lang );
+
+        if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_term_translations' ) && function_exists( 'pll_get_term_translations' ) ) {
+            $source_id = (int) $input['translation_of'];
+            $existing  = pll_get_term_translations( $source_id );
+            if ( ! is_array( $existing ) ) {
+                $existing = array();
+            }
+            $existing[ $lang ] = $term_id;
+            pll_save_term_translations( $existing );
+        }
+    }
+
+    return wp_content_abilities_format_term_output( $term_id, $taxonomy );
+}
+
+/**
+ * Internal helper: format a term as ability output (with translations map).
+ */
+function wp_content_abilities_format_term_output( $term_id, $taxonomy ) {
+    $term = get_term( $term_id, $taxonomy );
+    if ( ! $term || is_wp_error( $term ) ) {
+        return new WP_Error( 'not_found', 'Term not found after save.', array( 'status' => 500 ) );
+    }
+
+    $translations = function_exists( 'pll_get_term_translations' )
+        ? pll_get_term_translations( $term_id )
+        : array();
+    if ( ! is_array( $translations ) ) {
+        $translations = array();
+    }
+
+    $out = array(
+        'id'           => (int) $term->term_id,
+        'name'         => $term->name,
+        'slug'         => $term->slug,
+        'description'  => $term->description,
+        'lang'         => function_exists( 'pll_get_term_language' ) ? (string) pll_get_term_language( $term_id ) : '',
+        'translations' => empty( $translations ) ? (object) array() : $translations,
+    );
+
+    if ( 'category' === $taxonomy ) {
+        $out['parent'] = (int) $term->parent;
+    }
+
+    return $out;
+}
+
+/**
+ * Create Category callback
+ */
+function wp_content_abilities_create_category( $input ) {
+    return wp_content_abilities_insert_term( 'category', $input );
+}
+
+/**
+ * Update Category callback
+ */
+function wp_content_abilities_update_category( $input ) {
+    $term_id = (int) $input['id'];
+    $term    = get_term( $term_id, 'category' );
+    if ( ! $term || is_wp_error( $term ) ) {
+        return new WP_Error( 'not_found', 'Category not found.', array( 'status' => 404 ) );
+    }
+
+    $args = array();
+    if ( isset( $input['name'] ) ) {
+        $name = wp_strip_all_tags( (string) $input['name'] );
+        if ( '' === trim( $name ) ) {
+            return new WP_Error( 'invalid_name', 'Category name cannot be empty.', array( 'status' => 400 ) );
+        }
+        $args['name'] = $name;
+    }
+    if ( isset( $input['slug'] ) ) {
+        $args['slug'] = sanitize_title( $input['slug'] );
+    }
+    if ( isset( $input['description'] ) ) {
+        $args['description'] = wp_kses_post( $input['description'] );
+    }
+    if ( isset( $input['parent'] ) ) {
+        $parent_id = (int) $input['parent'];
+        if ( $parent_id === $term_id ) {
+            return new WP_Error( 'invalid_parent', 'A category cannot be its own parent.', array( 'status' => 400 ) );
+        }
+        if ( $parent_id > 0 ) {
+            $parent_term = get_term( $parent_id, 'category' );
+            if ( ! $parent_term || is_wp_error( $parent_term ) ) {
+                return new WP_Error( 'invalid_parent', 'Parent category does not exist.', array( 'status' => 400 ) );
+            }
+            // Prevent cycles: walk ancestors of proposed parent.
+            $ancestors = get_ancestors( $parent_id, 'category', 'taxonomy' );
+            if ( in_array( $term_id, array_map( 'intval', $ancestors ), true ) ) {
+                return new WP_Error( 'invalid_parent', 'Parent assignment would create a cycle.', array( 'status' => 400 ) );
+            }
+        }
+        $args['parent'] = max( 0, $parent_id );
+    }
+
+    if ( ! empty( $args ) ) {
+        $result = wp_update_term( $term_id, 'category', $args );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+    }
+
+    if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_term_language' ) ) {
+        $lang = sanitize_key( $input['lang'] );
+        pll_set_term_language( $term_id, $lang );
+
+        if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_term_translations' ) && function_exists( 'pll_get_term_translations' ) ) {
+            $source_id = (int) $input['translation_of'];
+            $existing  = pll_get_term_translations( $source_id );
+            if ( ! is_array( $existing ) ) {
+                $existing = array();
+            }
+            $existing[ $lang ] = $term_id;
+            pll_save_term_translations( $existing );
+        }
+    }
+
+    return wp_content_abilities_format_term_output( $term_id, 'category' );
+}
+
+/**
+ * Delete Category callback
+ */
+function wp_content_abilities_delete_category( $input ) {
+    $term_id = (int) $input['id'];
+    $term    = get_term( $term_id, 'category' );
+    if ( ! $term || is_wp_error( $term ) ) {
+        return new WP_Error( 'not_found', 'Category not found.', array( 'status' => 404 ) );
+    }
+
+    $default = (int) get_option( 'default_category' );
+    if ( $default && $term_id === $default ) {
+        return new WP_Error( 'forbidden', 'Cannot delete the default category.', array( 'status' => 403 ) );
+    }
+
+    $name   = $term->name;
+    $result = wp_delete_term( $term_id, 'category' );
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+    if ( false === $result || 0 === $result ) {
+        return new WP_Error( 'delete_failed', 'Failed to delete category.', array( 'status' => 500 ) );
+    }
+
+    return array(
+        'id'      => $term_id,
+        'deleted' => true,
+        'name'    => $name,
+    );
+}
+
+/**
+ * Create Tag callback
+ */
+function wp_content_abilities_create_tag( $input ) {
+    return wp_content_abilities_insert_term( 'post_tag', $input );
+}
+
+/**
+ * Update Tag callback
+ */
+function wp_content_abilities_update_tag( $input ) {
+    $term_id = (int) $input['id'];
+    $term    = get_term( $term_id, 'post_tag' );
+    if ( ! $term || is_wp_error( $term ) ) {
+        return new WP_Error( 'not_found', 'Tag not found.', array( 'status' => 404 ) );
+    }
+
+    $args = array();
+    if ( isset( $input['name'] ) ) {
+        $name = wp_strip_all_tags( (string) $input['name'] );
+        if ( '' === trim( $name ) ) {
+            return new WP_Error( 'invalid_name', 'Tag name cannot be empty.', array( 'status' => 400 ) );
+        }
+        $args['name'] = $name;
+    }
+    if ( isset( $input['slug'] ) ) {
+        $args['slug'] = sanitize_title( $input['slug'] );
+    }
+    if ( isset( $input['description'] ) ) {
+        $args['description'] = wp_kses_post( $input['description'] );
+    }
+
+    if ( ! empty( $args ) ) {
+        $result = wp_update_term( $term_id, 'post_tag', $args );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+    }
+
+    if ( ! empty( $input['lang'] ) && function_exists( 'pll_set_term_language' ) ) {
+        $lang = sanitize_key( $input['lang'] );
+        pll_set_term_language( $term_id, $lang );
+
+        if ( ! empty( $input['translation_of'] ) && function_exists( 'pll_save_term_translations' ) && function_exists( 'pll_get_term_translations' ) ) {
+            $source_id = (int) $input['translation_of'];
+            $existing  = pll_get_term_translations( $source_id );
+            if ( ! is_array( $existing ) ) {
+                $existing = array();
+            }
+            $existing[ $lang ] = $term_id;
+            pll_save_term_translations( $existing );
+        }
+    }
+
+    return wp_content_abilities_format_term_output( $term_id, 'post_tag' );
+}
+
+/**
+ * Delete Tag callback
+ */
+function wp_content_abilities_delete_tag( $input ) {
+    $term_id = (int) $input['id'];
+    $term    = get_term( $term_id, 'post_tag' );
+    if ( ! $term || is_wp_error( $term ) ) {
+        return new WP_Error( 'not_found', 'Tag not found.', array( 'status' => 404 ) );
+    }
+
+    $name   = $term->name;
+    $result = wp_delete_term( $term_id, 'post_tag' );
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+    if ( false === $result || 0 === $result ) {
+        return new WP_Error( 'delete_failed', 'Failed to delete tag.', array( 'status' => 500 ) );
+    }
+
+    return array(
+        'id'      => $term_id,
+        'deleted' => true,
+        'name'    => $name,
     );
 }
