@@ -2,6 +2,10 @@
 
 A WordPress plugin that exposes content management capabilities via the WordPress 6.9 Abilities API, enabling AI assistants to create, read, update, and delete WordPress content through the MCP protocol.
 
+## Fork Notice
+
+This is a fork of [aplaceforallmystuff/wp-content-abilities](https://github.com/aplaceforallmystuff/wp-content-abilities) by [Jim Christian](https://jimchristian.net), maintained here by [Daniel Kossmann](https://www.danielkossmann.com/). The original project appears to be discontinued because the author [migrated from WordPress to Astro](https://jimchristian.net/blog/2026/01/27/rebuilding-my-site/). Thanks Jim for the original work! Licensed under GPL v2 or later, same as the original.
+
 ## Important Notices
 
 ### Experimental Technology
@@ -64,46 +68,87 @@ The plugin uses WordPress's built-in authentication. For programmatic access:
 
 ## Available Abilities
 
-### Posts (6 abilities)
+### Posts (5 abilities)
 
 | Ability | Description |
 |---------|-------------|
-| `content/list-posts` | List posts with filters (status, category, tag, author, date range) |
-| `content/get-post` | Get a single post by ID with full content |
+| `content/list-posts` | List posts with filters (status, category, tag, author, language, search) |
+| `content/get-post` | Get a single post by ID with full content, metadata, categories, and tags |
 | `content/create-post` | Create a new post with all fields |
-| `content/update-post` | Update an existing post |
+| `content/update-post` | Update an existing post (only provided fields are changed) |
 | `content/delete-post` | Delete a post (move to trash or force delete) |
-| `content/get-post-revisions` | Get revision history for a post |
 
 ### Pages (5 abilities)
 
 | Ability | Description |
 |---------|-------------|
-| `content/list-pages` | List pages with filters |
-| `content/get-page` | Get a single page by ID |
-| `content/create-page` | Create a new page |
-| `content/update-page` | Update an existing page |
-| `content/delete-page` | Delete a page |
+| `content/list-pages` | List pages with optional filters |
+| `content/get-page` | Get a single page by ID with full content |
+| `content/create-page` | Create a new page (supports title, content, parent, menu order, template) |
+| `content/update-page` | Update an existing page (only provided fields are changed) |
+| `content/delete-page` | Delete a page (move to trash or force delete) |
 
-### Taxonomies (2 abilities)
+### Revisions (2 abilities)
 
 | Ability | Description |
 |---------|-------------|
-| `content/list-categories` | List all categories with hierarchy |
+| `content/list-revisions` | List all revisions of a post or page in reverse-chronological order |
+| `content/restore-revision` | Revert a post or page to a specific revision |
+
+### Categories (4 abilities)
+
+| Ability | Description |
+|---------|-------------|
+| `content/list-categories` | List all categories with post counts |
+| `content/create-category` | Create a new category (supports parent and Polylang language) |
+| `content/update-category` | Update an existing category |
+| `content/delete-category` | Permanently delete a category |
+
+### Tags (4 abilities)
+
+| Ability | Description |
+|---------|-------------|
 | `content/list-tags` | List all tags with post counts |
+| `content/create-tag` | Create a new tag |
+| `content/update-tag` | Update an existing tag |
+| `content/delete-tag` | Permanently delete a tag |
 
 ### Media (2 abilities)
 
 | Ability | Description |
 |---------|-------------|
-| `content/upload-media` | Upload images via base64 or URL |
-| `content/list-media` | List media library items with filters |
+| `content/upload-media` | Upload an image via base64 or URL |
+| `content/list-media` | List media library items with optional filters |
 
-### Site Info (1 ability)
+### Bulk Operations (4 abilities)
 
 | Ability | Description |
 |---------|-------------|
-| `content/get-site-info` | Get site title, tagline, URL, timezone, and more |
+| `content/bulk-update-posts` | Apply the same field changes to a list of posts |
+| `content/bulk-update-pages` | Apply the same field changes to a list of pages |
+| `content/bulk-delete-posts` | Delete a list of posts (honours trash unless force=true) |
+| `content/bulk-delete-pages` | Delete a list of pages (honours trash unless force=true) |
+
+### Custom Post Types (6 abilities)
+
+| Ability | Description |
+|---------|-------------|
+| `content/list-post-types` | List post types available to the content abilities |
+| `content/list-content` | List entries of a custom post type |
+| `content/get-content` | Get a single custom post type entry by ID |
+| `content/create-content` | Create a new entry of a custom post type |
+| `content/update-content` | Update an existing custom post type entry |
+| `content/delete-content` | Delete a custom post type entry |
+
+### Languages / Polylang (3 abilities)
+
+> These abilities require the [Polylang](https://wordpress.org/plugins/polylang/) plugin.
+
+| Ability | Description |
+|---------|-------------|
+| `content/list-languages` | List all languages configured in Polylang |
+| `content/get-translation` | Get the translated counterpart of a post, page, or media item |
+| `content/list-untranslated` | List posts or pages missing a translation in a target language |
 
 ## Create Post Fields
 
@@ -202,7 +247,7 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Contributing
 
-Issues and pull requests welcome at [GitHub](https://github.com/aplaceforallmystuff/wp-content-abilities).
+Issues and pull requests welcome at [GitHub](https://github.com/kossmann/wp-content-abilities).
 
 ## License
 
@@ -210,7 +255,7 @@ This plugin is licensed under the [GPL v2 or later](https://www.gnu.org/licenses
 
 ## Author
 
-Jim Christian - [jimchristian.net](https://jimchristian.net)
+Daniel Kossmann - [danielkossmann.com](https://www.danielkossmann.com/)
 
 ## Disclaimer
 

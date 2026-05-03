@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: WP Content Abilities
- * Plugin URI: https://github.com/aplaceforallmystuff/wp-content-abilities
+ * Plugin URI: https://github.com/kossmann/wp-content-abilities
  * Description: Exposes content management capabilities via the WordPress 6.9 Abilities API for AI assistants and MCP clients. Create, update, delete, and list posts, pages, and media.
- * Version: 1.1.0
- * Author: Jim Christian
- * Author URI: https://jimchristian.net
+ * Version: 1.2.0
+ * Author: Daniel Kossmann
+ * Author URI: https://www.danielkossmann.com/
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires at least: 6.9
@@ -1142,6 +1142,11 @@ function wp_content_abilities_register() {
                     'type'        => 'string',
                     'maxLength'   => 2083,
                     'description' => 'URL to download image from. Use either base64 or url, not both.',
+                ),
+                'local_path' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 4096,
+                    'description' => 'Hint for the calling agent: absolute path to a local file. The agent must read this file and supply its contents via base64 — this plugin does not read local paths directly. For small files use base64; for large files serve temporarily via a local HTTP server and use url instead.',
                 ),
                 'title' => array(
                     'type'        => 'string',
