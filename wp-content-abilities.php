@@ -452,6 +452,11 @@ function wp_content_abilities_register() {
                     'minimum'     => 1,
                     'description' => 'Post ID of the original post this is a translation of. Requires Polylang. Links this post into the translation group of the given post.',
                 ),
+                'author' => array(
+                    'type'        => 'string',
+                    'maxLength'   => 60,
+                    'description' => 'User login of the new post author. Requires edit_others_posts capability.',
+                ),
                 'meta' => array(
                     'type'                 => 'object',
                     'description'          => 'Custom field values keyed by meta key. Only keys registered via the wp_content_abilities_meta_allowlist filter are written; others are silently ignored. Pass an empty value to delete a key.',
@@ -469,6 +474,7 @@ function wp_content_abilities_register() {
                 'status'       => array( 'type' => 'string' ),
                 'url'          => array( 'type' => 'string' ),
                 'modified'     => array( 'type' => 'string' ),
+                'author'       => array( 'type' => 'string', 'description' => 'User login of the post author.' ),
                 'lang'         => array( 'type' => 'string' ),
                 'translations' => array( 'type' => 'object', 'description' => 'Map of language slug to post ID for all translations.' ),
                 'meta'         => array( 'type' => 'object', 'description' => 'Allowlisted custom field values after save.' ),
@@ -3081,6 +3087,16 @@ function wp_content_abilities_update_post( $input ) {
     if ( isset( $input['ping_status'] ) ) {
         $post_data['ping_status'] = $input['ping_status'];
     }
+    if ( isset( $input['author'] ) ) {
+        if ( ! current_user_can( 'edit_others_posts' ) ) {
+            return new WP_Error( 'forbidden', 'You do not have permission to change the post author.', array( 'status' => 403 ) );
+        }
+        $author = get_user_by( 'login', $input['author'] );
+        if ( ! $author ) {
+            return new WP_Error( 'invalid_author', 'No user found with that login.', array( 'status' => 400 ) );
+        }
+        $post_data['post_author'] = $author->ID;
+    }
 
     $result = wp_update_post( $post_data, true );
 
@@ -3194,6 +3210,8 @@ function wp_content_abilities_update_post( $input ) {
 
     $post = get_post( $input['id'] );
 
+    $author_user = get_userdata( $post->post_author );
+
     return array(
         'id'           => $post->ID,
         'title'        => $post->post_title,
@@ -3201,6 +3219,7 @@ function wp_content_abilities_update_post( $input ) {
         'status'       => $post->post_status,
         'url'          => get_permalink( $post->ID ),
         'modified'     => $post->post_modified,
+        'author'       => $author_user ? $author_user->user_login : '',
         'lang'         => function_exists( 'pll_get_post_language' ) ? (string) pll_get_post_language( $post->ID ) : '',
         'translations' => function_exists( 'pll_get_post_translations' ) ? pll_get_post_translations( $post->ID ) : (object) array(),
         'meta'         => wp_content_abilities_read_meta( $post->ID ),
