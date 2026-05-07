@@ -45,7 +45,7 @@ This plugin is provided "as is" without warranty of any kind. Use at your own ri
 
 | Plugin | Source | Purpose |
 |--------|--------|---------|
-| **MCP Adapter** | [WordPress AI Team](https://make.wordpress.org/ai/2025/07/17/mcp-adapter/) | Provides HTTP transport for MCP protocol at `/wp-json/mcp/mcp-adapter-default-server` |
+| **MCP Adapter** | [WordPress/mcp-adapter](https://github.com/WordPress/mcp-adapter) | Provides HTTP transport for MCP protocol at `/wp-json/mcp/mcp-adapter-default-server` |
 
 ### Optional Plugins
 

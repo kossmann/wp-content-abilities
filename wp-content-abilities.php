@@ -296,14 +296,12 @@ function wp_content_abilities_register() {
                 'comment_status' => array(
                     'type'        => 'string',
                     'enum'        => array( 'open', 'closed' ),
-                    'default'     => 'closed',
-                    'description' => 'Whether comments are allowed.',
+                    'description' => 'Whether comments are allowed. Defaults to the blog\'s default comment setting.',
                 ),
                 'ping_status' => array(
                     'type'        => 'string',
                     'enum'        => array( 'open', 'closed' ),
-                    'default'     => 'closed',
-                    'description' => 'Whether pingbacks/trackbacks are allowed.',
+                    'description' => 'Whether pingbacks/trackbacks are allowed. Defaults to the blog\'s default ping setting.',
                 ),
                 'author' => array(
                     'type'        => 'string',
@@ -2928,8 +2926,8 @@ function wp_content_abilities_create_post( $input ) {
         'post_excerpt'   => $input['excerpt'] ?? '',
         'post_status'    => $status,
         'post_name'      => $input['slug'] ?? '',
-        'comment_status' => $input['comment_status'] ?? 'closed',
-        'ping_status'    => $input['ping_status'] ?? 'closed',
+        'comment_status' => $input['comment_status'] ?? get_option( 'default_comment_status', 'closed' ),
+        'ping_status'    => $input['ping_status'] ?? get_option( 'default_ping_status', 'closed' ),
     );
 
     if ( ! empty( $input['date'] ) ) {
